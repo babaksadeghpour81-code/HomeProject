@@ -43,6 +43,21 @@ class BaseProperty(models.Model):
     video_url = models.URLField(blank=True, null=True, verbose_name='لینک ویدیو (اختیاری)')
     video_file = models.FileField(upload_to='properties/videos/', blank=True, null=True, verbose_name='فایل ویدیو (اختیاری)')
 
+    @property
+    def images(self):
+        from django.contrib.contenttypes.models import ContentType
+        from .models import PropertyImage
+        ct = ContentType.objects.get_for_model(self)
+        return PropertyImage.objects.filter(content_type=ct, object_id=self.id)
+
+    @property
+    def is_residential(self):
+        return self.property_type in ('villa', 'apartment', 'commercial', 'office')
+
+    @property
+    def is_industrial_or_land(self):
+        return self.property_type in ('industrial', 'land')
+
     class Meta:
         abstract = True
         ordering = ['-created_at']
@@ -65,7 +80,7 @@ class ResidentialProperty(BaseProperty):
     )
     location_phase = models.CharField(max_length=20, choices=LOCATION_CHOICES, default='other', verbose_name='لوکیشن (فاز)')
     location_text = models.CharField(max_length=200, blank=True, null=True, verbose_name='لوکیشن (توضیح)')
-    area = models.PositiveIntegerField(verbose_name='متراژ')
+    area = models.PositiveIntegerField(blank=True, null=True, verbose_name='متراژ')
     bedrooms = models.PositiveIntegerField(default=0, verbose_name='تعداد خواب')
     floor = models.IntegerField(default=0, verbose_name='طبقه')
     total_floors = models.PositiveIntegerField(default=0, verbose_name='تعداد کل طبقات')
@@ -84,6 +99,13 @@ class ResidentialProperty(BaseProperty):
         if self.status == 'rent' and not (self.deposit or self.rent):
             raise ValidationError('برای رهن/اجاره، ودیعه یا اجاره ماهیانه الزامی است.')
 
+    @property
+    def images(self):
+        from django.contrib.contenttypes.models import ContentType
+        from .models import PropertyImage
+        ct = ContentType.objects.get_for_model(self)
+        return PropertyImage.objects.filter(content_type=ct, object_id=self.id)
+
     class Meta:
         verbose_name = 'ملک مسکونی/تجاری/اداری'
         verbose_name_plural = 'املاک مسکونی/تجاری/اداری'
@@ -97,7 +119,7 @@ class IndustrialProperty(BaseProperty):
         verbose_name='آگهی‌دهنده'
     )
     usage = models.CharField(max_length=100, verbose_name='کاربری')
-    area = models.PositiveIntegerField(verbose_name='متراژ')
+    area = models.PositiveIntegerField(blank=True, null=True, verbose_name='متراژ')
 
     class Meta:
         verbose_name = 'ملک صنعتی'
@@ -112,7 +134,7 @@ class LandProperty(BaseProperty):
         verbose_name='آگهی‌دهنده'
     )
     usage = models.CharField(max_length=100, verbose_name='کاربری')
-    area = models.PositiveIntegerField(verbose_name='متراژ')
+    area = models.PositiveIntegerField(blank=True, null=True, verbose_name='متراژ')
 
     class Meta:
         verbose_name = 'زمین'
@@ -126,7 +148,7 @@ class GardenProperty(BaseProperty):
         related_name='garden_properties',   # ← یکتا
         verbose_name='آگهی‌دهنده'
     )
-    area = models.PositiveIntegerField(verbose_name='متراژ')
+    area = models.PositiveIntegerField(blank=True, null=True, verbose_name='متراژ')
 
     class Meta:
         verbose_name = 'باغ و ویلا'
@@ -150,3 +172,48 @@ class PropertyImage(models.Model):
 
     def __str__(self):
         return f"عکس {self.id} - {self.content_type}"
+
+class ConstructionProject(models.Model):
+    PROJECT_TYPE_CHOICES = (
+        ('presale', 'پیش‌فروش'),
+        ('partnership', 'مشارکت در ساخت'),
+    )
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='construction_projects',
+        verbose_name='آگهی‌دهنده'
+    )
+    project_type = models.CharField(
+        max_length=20,
+        choices=PROJECT_TYPE_CHOICES,
+        verbose_name='نوع پروژه'
+    )
+    title = models.CharField(max_length=200, verbose_name='عنوان پروژه')
+    description = models.TextField(verbose_name='توضیحات')
+    location_phase = models.CharField(
+        max_length=20,
+        choices=ResidentialProperty.LOCATION_CHOICES,
+        default='other',
+        verbose_name='لوکیشن'
+    )
+    location_text = models.CharField(max_length=200, blank=True, null=True, verbose_name='توضیح لوکیشن')
+    area = models.PositiveIntegerField(verbose_name='متراژ')
+    total_units = models.PositiveIntegerField(default=0, verbose_name='تعداد کل واحدها')
+    floors = models.PositiveIntegerField(default=0, verbose_name='تعداد طبقات')
+    price = models.DecimalField(max_digits=15, decimal_places=0, blank=True, null=True, verbose_name='قیمت/سهم')
+    start_date = jmodels.jDateField(blank=True, null=True, verbose_name='تاریخ شروع')
+    delivery_date = jmodels.jDateField(blank=True, null=True, verbose_name='تاریخ تحویل')
+    amenities = models.TextField(blank=True, null=True, verbose_name='امکانات')
+    video_url = models.URLField(blank=True, null=True, verbose_name='لینک ویدیو')
+    created_at = jmodels.jDateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True, verbose_name='فعال')
+
+    class Meta:
+        verbose_name = 'پروژه ساخت و ساز'
+        verbose_name_plural = 'پروژه‌های ساخت و ساز'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.title} ({self.get_project_type_display()})"
+

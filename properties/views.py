@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from django.http import HttpResponseForbidden
+from .models import ConstructionProject
+from .forms import ConstructionProjectForm
 
 from .models import (
     ResidentialProperty, IndustrialProperty, LandProperty, GardenProperty
@@ -64,7 +66,9 @@ def property_list(request):
 
 
 def property_detail(request, pk, property_type):
-    """جزئیات آگهی"""
+    from django.contrib.contenttypes.models import ContentType
+    from .models import PropertyImage
+
     model_map = {
         'residential': ResidentialProperty,
         'industrial': IndustrialProperty,
@@ -75,19 +79,41 @@ def property_detail(request, pk, property_type):
     if not Model:
         messages.error(request, 'نوع ملک یافت نشد.')
         return redirect('properties:property_list')
+
     prop = get_object_or_404(Model, pk=pk)
-    return render(request, 'properties/property_detail.html', {'prop': prop})
+
+    # گرفتن عکس‌ها
+    ct = ContentType.objects.get_for_model(prop)
+    images = PropertyImage.objects.filter(
+        content_type=ct,
+        object_id=prop.id
+    ).order_by('order')
+
+    return render(request, 'properties/property_detail.html', {
+        'prop': prop,
+        'images': images,
+    })
+
+
+def construction_list(request):
+    """لیست پروژه‌های ساخت و ساز"""
+    project_type = request.GET.get('type', '')
+    projects = ConstructionProject.objects.filter(is_active=True)
+    if project_type:
+        projects = projects.filter(project_type=project_type)
+    return render(request, 'properties/construction_list.html', {
+        'projects': projects,
+        'current_type': project_type,
+    })
 
 
 @login_required
 def property_create(request):
-    """ثبت آگهی - چک لایسنس"""
     if not request.user.can_post_property:
         messages.error(request, 'برای ثبت آگهی باید لایسنس فعال داشته باشید.')
         return redirect('properties:home')
 
     if request.method == 'POST':
-        # تشخیص نوع ملک از فیلد hidden یا انتخاب کاربر
         property_type = request.POST.get('property_type')
         status = request.POST.get('status')
 
@@ -109,10 +135,25 @@ def property_create(request):
                 prop.property_type = property_type
                 prop.status = status
                 prop.save()
+
+                # آپلود عکس‌ها
+                from .models import PropertyImage
+                from django.contrib.contenttypes.models import ContentType
+                images = request.FILES.getlist('images')
+                if images:
+                    ct = ContentType.objects.get_for_model(prop)
+                    for idx, img in enumerate(images):
+                        PropertyImage.objects.create(
+                            content_type=ct,
+                            object_id=prop.id,
+                            image=img,
+                            order=idx,
+                        )
+
                 messages.success(request, 'آگهی با موفقیت ثبت شد.')
                 return redirect('properties:property_list')
             else:
-                messages.error(request, 'لطفاً خطاهای فرم را برطرف کنید.')
+                messages.error(request, f'خطا در فرم: {form.errors}')
         else:
             messages.error(request, 'نوع ملک نامعتبر است.')
 
@@ -124,3 +165,166 @@ def property_create(request):
         ],
         'status_choices': ResidentialProperty.STATUS_CHOICES,
     })
+
+@login_required
+def construction_create(request):
+    """ثبت پروژه ساخت و ساز"""
+    if not request.user.can_post_property:
+        messages.error(request, 'برای ثبت پروژه باید لایسنس فعال داشته باشید.')
+        return redirect('properties:home')
+
+    if request.method == 'POST':
+        form = ConstructionProjectForm(request.POST, request.FILES)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.owner = request.user
+            obj.save()
+            messages.success(request, 'پروژه با موفقیت ثبت شد.')
+            return redirect('properties:construction_list')
+        else:
+            messages.error(request, f'خطا در فرم: {form.errors}')
+    else:
+        form = ConstructionProjectForm()
+
+    return render(request, 'properties/construction_form.html', {'form': form})
+
+# ============================================================
+# ویرایش و حذف آگهی
+# ============================================================
+
+def _get_property_model(property_type):
+    """برگرداندن مدل بر اساس نوع ملک"""
+    model_map = {
+        'residential': ResidentialProperty,
+        'industrial': IndustrialProperty,
+        'land': LandProperty,
+        'garden': GardenProperty,
+    }
+    return model_map.get(property_type)
+
+
+def _get_property_form(property_type):
+    """برگرداندن فرم بر اساس نوع ملک"""
+    form_map = {
+        'residential': ResidentialPropertyForm,
+        'industrial': IndustrialPropertyForm,
+        'land': LandPropertyForm,
+        'garden': GardenPropertyForm,
+    }
+    return form_map.get(property_type)
+
+
+@login_required
+def property_update(request, pk, property_type):
+    """ویرایش آگهی - فقط صاحب آگهی یا مدیر"""
+    Model = _get_property_model(property_type)
+    FormClass = _get_property_form(property_type)
+    if not Model or not FormClass:
+        messages.error(request, 'نوع ملک نامعتبر است.')
+        return redirect('properties:property_list')
+
+    prop = get_object_or_404(Model, pk=pk)
+
+    # چک دسترسی: صاحب آگهی یا admin/superadmin
+    if prop.owner != request.user and request.user.role not in ('admin', 'superadmin'):
+        return HttpResponseForbidden('شما اجازه ویرایش این آگهی را ندارید.')
+
+    if request.method == 'POST':
+        form = FormClass(request.POST, request.FILES, instance=prop)
+        if form.is_valid():
+            form.save()
+
+            # آپلود عکس‌های جدید (در صورت وجود)
+            from .models import PropertyImage
+            from django.contrib.contenttypes.models import ContentType
+            images = request.FILES.getlist('images')
+            if images:
+                ct = ContentType.objects.get_for_model(prop)
+                for idx, img in enumerate(images):
+                    PropertyImage.objects.create(
+                        content_type=ct,
+                        object_id=prop.id,
+                        image=img,
+                        order=idx,
+                    )
+
+            messages.success(request, 'آگهی با موفقیت ویرایش شد.')
+            return redirect('properties:property_detail', pk=prop.pk, property_type=property_type)
+        else:
+            messages.error(request, f'خطا در فرم: {form.errors}')
+    else:
+        form = FormClass(instance=prop)
+
+    # عکس‌های موجود
+    from .models import PropertyImage
+    from django.contrib.contenttypes.models import ContentType
+    ct = ContentType.objects.get_for_model(prop)
+    existing_images = PropertyImage.objects.filter(content_type=ct, object_id=prop.id)
+
+    return render(request, 'properties/property_form.html', {
+        'form': form,
+        'prop': prop,
+        'existing_images': existing_images,
+        'is_edit': True,
+        'property_type': property_type,
+        'property_types': [
+            ('villa', 'ویلایی'), ('apartment', 'آپارتمان'),
+            ('commercial', 'تجاری'), ('office', 'اداری'),
+            ('industrial', 'صنعتی'), ('land', 'زمین'), ('garden', 'باغ'),
+        ],
+        'status_choices': ResidentialProperty.STATUS_CHOICES,
+    })
+
+
+@login_required
+def property_delete(request, pk, property_type):
+    """حذف آگهی - فقط صاحب آگهی یا مدیر"""
+    Model = _get_property_model(property_type)
+    if not Model:
+        messages.error(request, 'نوع ملک نامعتبر است.')
+        return redirect('properties:property_list')
+
+    prop = get_object_or_404(Model, pk=pk)
+
+    if prop.owner != request.user and request.user.role not in ('admin', 'superadmin'):
+        return HttpResponseForbidden('شما اجازه حذف این آگهی را ندارید.')
+
+    if request.method == 'POST':
+        # حذف عکس‌ها هم
+        from .models import PropertyImage
+        from django.contrib.contenttypes.models import ContentType
+        ct = ContentType.objects.get_for_model(prop)
+        PropertyImage.objects.filter(content_type=ct, object_id=prop.id).delete()
+
+        prop.delete()
+        messages.success(request, 'آگهی با موفقیت حذف شد.')
+        return redirect('accounts:dashboard')
+
+    # صفحه تایید حذف
+    return render(request, 'properties/property_confirm_delete.html', {'prop': prop, 'property_type': property_type})
+
+
+@login_required
+def property_image_delete(request, image_id):
+    """حذف یک عکس از آگهی"""
+    from .models import PropertyImage
+    img = get_object_or_404(PropertyImage, id=image_id)
+    prop = img.content_object
+
+    # چک دسترسی
+    if prop.owner != request.user and request.user.role not in ('admin', 'superadmin'):
+        return HttpResponseForbidden('دسترسی غیرمجاز')
+
+    # تشخیص property_type
+    type_map = {
+        'ResidentialProperty': 'residential',
+        'IndustrialProperty': 'industrial',
+        'LandProperty': 'land',
+        'GardenProperty': 'garden',
+    }
+    ptype = type_map.get(prop.__class__.__name__, 'residential')
+
+    img.delete()
+    messages.success(request, 'عکس حذف شد.')
+    return redirect('properties:property_update', pk=prop.pk, property_type=ptype)
+

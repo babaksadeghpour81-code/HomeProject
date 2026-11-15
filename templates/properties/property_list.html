@@ -1,10 +1,125 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% block title %}
+    {% if current_status == 'sale' %}خرید و فروش
+    {% elif current_status == 'rent' %}رهن و اجاره
+    {% elif current_status == 'barter' %}تهاتر
+    {% elif current_status == 'business' %}فایل کاسبی
+    {% elif current_status == 'garden' %}باغ و باغچه
+    {% else %}همه آگهی‌ها{% endif %}
+{% endblock %}
 
-</body>
-</html>
+{% block content %}
+
+<!-- هدر صفحه -->
+<div class="page-header">
+    <h1>
+        {% if current_status == 'sale' %}🏘️ خرید و فروش
+        {% elif current_status == 'rent' %}🔑 رهن و اجاره
+        {% elif current_status == 'barter' %}🔄 تهاتر
+        {% elif current_status == 'business' %}💼 فایل کاسبی
+        {% elif current_status == 'garden' %}🌳 باغ و باغچه
+        {% else %}📋 همه آگهی‌ها{% endif %}
+    </h1>
+    <p>تعداد نتایج: <strong>{{ properties|length }}</strong></p>
+</div>
+
+<!-- فیلتر سریع -->
+<div class="filter-bar">
+    <a href="{% url 'properties:property_list' %}" class="filter-chip {% if not current_status and not current_type %}active{% endif %}">همه</a>
+    <a href="{% url 'properties:property_list' %}?status=sale" class="filter-chip {% if current_status == 'sale' %}active{% endif %}">خرید و فروش</a>
+    <a href="{% url 'properties:property_list' %}?status=rent" class="filter-chip {% if current_status == 'rent' %}active{% endif %}">رهن و اجاره</a>
+    <a href="{% url 'properties:property_list' %}?status=barter" class="filter-chip {% if current_status == 'barter' %}active{% endif %}">تهاتر</a>
+    <a href="{% url 'properties:property_list' %}?status=business" class="filter-chip {% if current_status == 'business' %}active{% endif %}">فایل کاسبی</a>
+    <a href="{% url 'properties:property_list' %}?status=garden" class="filter-chip {% if current_status == 'garden' %}active{% endif %}">باغ و باغچه</a>
+</div>
+
+<div class="filter-bar">
+    <a href="{% url 'properties:property_list' %}{% if current_status %}?status={{ current_status }}{% endif %}" class="filter-chip {% if not current_type %}active{% endif %}">همه انواع</a>
+    <a href="{% url 'properties:property_list' %}?{% if current_status %}status={{ current_status }}&{% endif %}type=villa" class="filter-chip {% if current_type == 'villa' %}active{% endif %}">ویلایی</a>
+    <a href="{% url 'properties:property_list' %}?{% if current_status %}status={{ current_status }}&{% endif %}type=apartment" class="filter-chip {% if current_type == 'apartment' %}active{% endif %}">آپارتمان</a>
+    <a href="{% url 'properties:property_list' %}?{% if current_status %}status={{ current_status }}&{% endif %}type=commercial" class="filter-chip {% if current_type == 'commercial' %}active{% endif %}">تجاری</a>
+    <a href="{% url 'properties:property_list' %}?{% if current_status %}status={{ current_status }}&{% endif %}type=office" class="filter-chip {% if current_type == 'office' %}active{% endif %}">اداری</a>
+    <a href="{% url 'properties:property_list' %}?{% if current_status %}status={{ current_status }}&{% endif %}type=industrial" class="filter-chip {% if current_type == 'industrial' %}active{% endif %}">صنعتی</a>
+    <a href="{% url 'properties:property_list' %}?{% if current_status %}status={{ current_status }}&{% endif %}type=land" class="filter-chip {% if current_type == 'land' %}active{% endif %}">زمین</a>
+    <a href="{% url 'properties:property_list' %}?{% if current_status %}status={{ current_status }}&{% endif %}type=garden" class="filter-chip {% if current_type == 'garden' %}active{% endif %}">باغ</a>
+</div>
+
+<!-- لیست آگهی‌ها -->
+{% if properties %}
+    <div class="property-grid">
+        {% for prop in properties %}
+            <div class="property-card">
+                <!-- تصویر شاخص (اگر وجود داشت) -->
+                {% if prop.images.all %}
+                    <img src="{{ prop.images.all.0.image.url }}" alt="{{ prop.title }}" class="property-thumb">
+                {% else %}
+                    <div class="property-thumb placeholder-thumb">🏠</div>
+                {% endif %}
+
+                <div class="property-card-body">
+                    <h3>{{ prop.title }}</h3>
+
+                    <div class="badges">
+                        <span class="badge">{{ prop.get_property_type_display }}</span>
+                        <span class="badge">{{ prop.get_status_display }}</span>
+                        {% if prop.location_phase %}
+                            <span class="badge badge-info">{{ prop.get_location_phase_display }}</span>
+                        {% endif %}
+                    </div>
+
+                    <p class="property-desc">{{ prop.description|truncatewords:15 }}</p>
+
+                    <!-- اطلاعات خلاصه -->
+                    <div class="property-meta">
+                        {% if prop.area %}
+                            <span>📐 {{ prop.area }} متر</span>
+                        {% endif %}
+                        {% if prop.bedrooms %}
+                            <span>🛏 {{ prop.bedrooms }} خواب</span>
+                        {% endif %}
+                        {% if prop.floor %}
+                            <span>🏢 طبقه {{ prop.floor }}</span>
+                        {% endif %}
+                        {% if prop.usage %}
+                            <span>📋 {{ prop.usage }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- قیمت -->
+                    <div class="property-price">
+                        {% if prop.status == 'sale' and prop.price %}
+                            💰 {{ prop.price|floatformat:"0" }} تومان
+                        {% elif prop.status == 'rent' %}
+                            {% if prop.deposit %}🔒 ودیعه: {{ prop.deposit|floatformat:"0" }}{% endif %}
+                            {% if prop.rent %} | اجاره: {{ prop.rent|floatformat:"0" }}{% endif %}
+                        {% elif prop.price %}
+                            💰 {{ prop.price|floatformat:"0" }} تومان
+                        {% endif %}
+                    </div>
+
+                    <!-- لینک جزئیات -->
+                    {% if prop.property_type in 'villa,apartment,commercial,office' %}
+                        <a href="{% url 'properties:property_detail' prop.pk 'residential' %}" class="btn btn-primary btn-block">مشاهده جزئیات</a>
+                    {% elif prop.property_type == 'industrial' %}
+                        <a href="{% url 'properties:property_detail' prop.pk 'industrial' %}" class="btn btn-primary btn-block">مشاهده جزئیات</a>
+                    {% elif prop.property_type == 'land' %}
+                        <a href="{% url 'properties:property_detail' prop.pk 'land' %}" class="btn btn-primary btn-block">مشاهده جزئیات</a>
+                    {% elif prop.property_type == 'garden' %}
+                        <a href="{% url 'properties:property_detail' prop.pk 'garden' %}" class="btn btn-primary btn-block">مشاهده جزئیات</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state">
+        <span class="empty-icon">🔍</span>
+        <h2>آگهی‌ای یافت نشد</h2>
+        <p>متأسفانه در این دسته آگهی‌ای ثبت نشده است.</p>
+        {% if user.can_post_property %}
+            <a href="{% url 'properties:property_create' %}" class="btn btn-primary">➕ ثبت اولین آگهی</a>
+        {% endif %}
+    </div>
+{% endif %}
+
+{% endblock %}

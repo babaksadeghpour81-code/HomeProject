@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}حذف آگهی{% endblock %}
+
+{% block content %}
+<div class="confirm-delete-box">
+    <h1>⚠️ حذف آگهی</h1>
+    <p>آیا مطمئن هستید که می‌خواهید آگهی <strong>«{{ prop.title }}»</strong> را حذف کنید؟</p>
+    <p style="color: #991b1b;">این عمل قابل بازگشت نیست.</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">بله، حذف کن</button>
+        <a href="{% url 'properties:property_detail' prop.pk property_type %}" class="btn btn-outline">انصراف</a>
+    </form>
+</div>
+{% endblock %}

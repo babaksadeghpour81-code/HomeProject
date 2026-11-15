@@ -79,8 +79,25 @@
                     <td>{% if prop.price %}{{ prop.price|floatformat:"0" }}{% else %}-{% endif %}</td>
                     <td>{{ prop.created_at|date:"Y/m/d" }}</td>
                     <td>
+                        {% if prop.property_type in 'villa,apartment,commercial,office' %}
+                            <a href="{% url 'properties:property_update' prop.pk 'residential' %}" class="btn btn-sm btn-primary">✏️ ویرایش</a>
+                            <a href="{% url 'properties:property_delete' prop.pk 'residential' %}" class="btn btn-sm btn-danger">🗑 حذف</a>
+                        {% elif prop.property_type == 'industrial' %}
+                            <a href="{% url 'properties:property_update' prop.pk 'industrial' %}" class="btn btn-sm btn-primary">✏️ ویرایش</a>
+                            <a href="{% url 'properties:property_delete' prop.pk 'industrial' %}" class="btn btn-sm btn-danger">🗑 حذف</a>
+                        {% elif prop.property_type == 'land' %}
+                            <a href="{% url 'properties:property_update' prop.pk 'land' %}" class="btn btn-sm btn-primary">✏️ ویرایش</a>
+                            <a href="{% url 'properties:property_delete' prop.pk 'land' %}" class="btn btn-sm btn-danger">🗑 حذف</a>
+                        {% elif prop.property_type == 'garden' %}
+                            <a href="{% url 'properties:property_update' prop.pk 'garden' %}" class="btn btn-sm btn-primary">✏️ ویرایش</a>
+                            <a href="{% url 'properties:property_delete' prop.pk 'garden' %}" class="btn btn-sm btn-danger">🗑 حذف</a>
+                        {% endif %}
+                    </td>
+                    <!--
+                    <td>
                         {% if prop.is_active %}✅{% else %}❌{% endif %}
                     </td>
+                    -->
                 </tr>
             {% endfor %}
         </tbody>

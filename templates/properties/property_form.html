@@ -1,10 +1,189 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% block title %}ثبت آگهی جدید{% endblock %}
 
-</body>
-</html>
+{% block content %}
+<h1>ثبت آگهی جدید</h1>
+
+<form method="post" enctype="multipart/form-data" class="property-form">
+    {% csrf_token %}
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- نوع آگهی (خرید، رهن، تهاتر، ...) -->
+    <div class="form-row">
+        <label>نوع آگهی:</label>
+        <select name="status" class="form-control" required>
+            {% for value, label in status_choices %}
+                <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- نوع ملک (ویلایی، آپارتمان، صنعتی، زمین، باغ) -->
+    <div class="form-row">
+        <label>نوع ملک:</label>
+        <select name="property_type" id="id_property_type" class="form-control" required>
+            {% for value, label in property_types %}
+                <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- ================= فیلدهای مشترک ================= -->
+    <div class="form-row">
+        <label>عنوان آگهی:</label>
+        <input type="text" name="title" class="form-control" required placeholder="مثلاً: آپارتمان ۱۰۰ متری فاز ۲">
+    </div>
+
+    <div class="form-row">
+        <label>توضیحات:</label>
+        <textarea name="description" class="form-control" rows="4" required></textarea>
+    </div>
+
+    <div class="form-row">
+        <label>قیمت کل (برای فروش - تومان):</label>
+        <input type="number" name="price" class="form-control" placeholder="اختیاری">
+    </div>
+
+    <div class="form-row">
+        <label>ودیعه (برای رهن - تومان):</label>
+        <input type="number" name="deposit" class="form-control" placeholder="اختیاری">
+    </div>
+
+    <div class="form-row">
+        <label>اجاره ماهیانه (تومان):</label>
+        <input type="number" name="rent" class="form-control" placeholder="اختیاری">
+    </div>
+
+    <!-- ================= فیلدهای مسکونی/تجاری/اداری ================= -->
+    <div class="form-row residential-only">
+        <label>لوکیشن (فاز):</label>
+        <select name="location_phase" class="form-control">
+            <option value="phase1">فاز یک</option>
+            <option value="phase2">فاز دو</option>
+            <option value="phase3">فاز سه</option>
+            <option value="phase4">فاز چهار</option>
+            <option value="phase5">فاز پنج</option>
+            <option value="phase6">فاز شش</option>
+            <option value="other">سایر</option>
+        </select>
+    </div>
+
+    <div class="form-row residential-only">
+        <label>لوکیشن (توضیح):</label>
+        <input type="text" name="location_text" class="form-control" placeholder="اگر «سایر» انتخاب کردید">
+    </div>
+
+    <div class="form-row residential-only">
+        <label>متراژ (متر):</label>
+        <input type="number" name="area_residential" class="form-control">
+    </div>
+
+    <div class="form-row residential-only">
+        <label>تعداد خواب:</label>
+        <input type="number" name="bedrooms" class="form-control" value="0">
+    </div>
+
+    <div class="form-row residential-only">
+        <label>طبقه:</label>
+        <input type="number" name="floor" class="form-control" value="0">
+    </div>
+
+    <div class="form-row residential-only">
+        <label>تعداد کل طبقات:</label>
+        <input type="number" name="total_floors" class="form-control" value="0">
+    </div>
+
+    <div class="form-row residential-only">
+        <label>تعداد واحد در هر طبقه:</label>
+        <input type="number" name="units_per_floor" class="form-control" value="0">
+    </div>
+
+    <div class="form-row residential-only">
+        <label>سن بنا (سال):</label>
+        <input type="number" name="building_age" class="form-control" value="0">
+    </div>
+
+    <div class="form-row checkboxes residential-only">
+        <label><input type="checkbox" name="has_elevator"> آسانسور</label>
+        <label><input type="checkbox" name="has_storage"> انباری</label>
+        <label><input type="checkbox" name="has_parking"> پارکینگ</label>
+        <label><input type="checkbox" name="has_balcony"> بالکن/تراس</label>
+    </div>
+
+    <div class="form-row residential-only">
+        <label>امکانات:</label>
+        <textarea name="amenities" class="form-control" rows="2" placeholder="مثلاً: کولر گازی، شوفاژ، ..."></textarea>
+    </div>
+
+    <!-- ================= فیلدهای صنعتی و زمین ================= -->
+    <div class="form-row industrial-land-only">
+        <label>کاربری:</label>
+        <input type="text" name="usage" class="form-control" placeholder="مثلاً: صنعتی، کشاورزی، مسکونی">
+    </div>
+
+    <div class="form-row industrial-land-only">
+        <label>متراژ (متر):</label>
+        <input type="number" name="area_industrial_land" class="form-control">
+    </div>
+
+    <!-- ================= فیلدهای باغ ================= -->
+    <div class="form-row garden-only">
+        <label>متراژ (متر):</label>
+        <input type="number" name="area_garden" class="form-control">
+    </div>
+
+    <!-- ================= فیلدهای چندرسانه‌ای ================= -->
+    <div class="form-row">
+        <label>لینک ویدیو (اختیاری):</label>
+        <input type="url" name="video_url" class="form-control" placeholder="https://...">
+    </div>
+
+    <div class="form-row">
+        <label>فایل ویدیو (اختیاری):</label>
+        <input type="file" name="video_file" class="form-control" accept="video/*">
+    </div>
+
+    <button type="submit" class="btn btn-primary">ثبت آگهی</button>
+    <a href="{% url 'properties:property_list' %}" class="btn btn-outline">انصراف</a>
+</form>
+
+<!-- ================= اسکریپت نمایش داینامیک فیلدها ================= -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const typeSelect = document.getElementById('id_property_type');
+    if (!typeSelect) return;
+
+    const residentialTypes = ['villa', 'apartment', 'commercial', 'office'];
+
+    function toggleFields() {
+        const type = typeSelect.value;
+        const isResidential = residentialTypes.includes(type);
+        const isIndustrialOrLand = (type === 'industrial' || type === 'land');
+        const isGarden = (type === 'garden');
+
+        // مسکونی/تجاری/اداری
+        document.querySelectorAll('.residential-only').forEach(el => {
+            el.style.display = isResidential ? '' : 'none';
+        });
+
+        // صنعتی و زمین
+        document.querySelectorAll('.industrial-land-only').forEach(el => {
+            el.style.display = isIndustrialOrLand ? '' : 'none';
+        });
+
+        // باغ
+        document.querySelectorAll('.garden-only').forEach(el => {
+            el.style.display = isGarden ? '' : 'none';
+        });
+    }
+
+    typeSelect.addEventListener('change', toggleFields);
+    toggleFields();  // اجرا در بار اول
+});
+</script>
+{% endblock %}

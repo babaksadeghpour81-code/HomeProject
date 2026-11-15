@@ -3,7 +3,7 @@ from .models import (
     ResidentialProperty, IndustrialProperty,
     LandProperty, GardenProperty
 )
-
+from .models import ConstructionProject
 
 class BasePropertyForm(forms.ModelForm):
     """فرم پایه برای فیلدهای مشترک"""
@@ -72,3 +72,28 @@ class GardenPropertyForm(BasePropertyForm):
             **BasePropertyForm.Meta.widgets,
             'area': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'متراژ'}),
         }
+
+class ConstructionProjectForm(forms.ModelForm):
+    class Meta:
+        model = ConstructionProject
+        fields = [
+            'project_type', 'title', 'description', 'location_phase', 'location_text',
+            'area', 'total_units', 'floors', 'price', 'start_date', 'delivery_date',
+            'amenities', 'video_url'
+        ]
+        widgets = {
+            'project_type': forms.Select(attrs={'class': 'form-control'}),
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'location_phase': forms.Select(attrs={'class': 'form-control'}),
+            'location_text': forms.TextInput(attrs={'class': 'form-control'}),
+            'area': forms.NumberInput(attrs={'class': 'form-control'}),
+            'total_units': forms.NumberInput(attrs={'class': 'form-control'}),
+            'floors': forms.NumberInput(attrs={'class': 'form-control'}),
+            'price': forms.NumberInput(attrs={'class': 'form-control'}),
+            'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'delivery_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'amenities': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'video_url': forms.URLInput(attrs={'class': 'form-control'}),
+        }
+

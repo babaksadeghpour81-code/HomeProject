@@ -20,12 +20,13 @@
                 <a href="{% url 'properties:home' %}">خانه</a>
                 <a href="{% url 'properties:property_list' %}?status=sale">خرید و فروش</a>
                 <a href="{% url 'properties:property_list' %}?status=rent">رهن و اجاره</a>
+                <a href="{% url 'properties:construction_list' %}">ساخت و ساز</a>
                 <a href="{% url 'properties:property_list' %}?status=barter">تهاتر</a>
                 <a href="{% url 'properties:property_list' %}?status=business">فایل کاسبی</a>
                 <a href="{% url 'properties:property_list' %}?status=garden">باغ و باغچه</a>
-                <a href="#">وام بانکی</a>
+                <a href="{% url 'support:loan_request' %}">وام بانکی</a>
                 <a href="{% url 'agencies:agency_list' %}">آژانس‌ها</a>
-                <a href="#">پشتیبان</a>
+                <a href="{% url 'support:contact' %}">پشتیبان</a>
             </nav>
             <div class="auth-links">
                 {% if user.is_authenticated %}

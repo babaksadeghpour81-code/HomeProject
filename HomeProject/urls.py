@@ -8,7 +8,7 @@ urlpatterns = [
     path('', include('properties.urls')),
     path('accounts/', include('accounts.urls')),
     path('agencies/', include('agencies.urls')),
-    # path('support/', include('support.urls')),
+    path('support/', include('support.urls')),
 ]
 
 # در حالت توسعه اجازه دسترسی به فایل‌های media و static

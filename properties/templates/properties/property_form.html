@@ -1,117 +1,188 @@
 {% extends 'base.html' %}
-{% block title %}ثبت آگهی{% endblock %}
+{% block title %}{% if is_edit %}ویرایش آگهی{% else %}ثبت آگهی جدید{% endif %}{% endblock %}
 
 {% block content %}
-<h1>ثبت آگهی جدید</h1>
+<h1>{% if is_edit %}ویرایش آگهی{% else %}ثبت آگهی جدید{% endif %}</h1>
+
 <form method="post" enctype="multipart/form-data" class="property-form">
     {% csrf_token %}
 
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- نوع آگهی -->
     <div class="form-row">
         <label>نوع آگهی:</label>
         <select name="status" class="form-control" required>
             {% for value, label in status_choices %}
-                <option value="{{ value }}">{{ label }}</option>
+                <option value="{{ value }}" {% if prop and prop.status == value %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
         </select>
     </div>
 
+    <!-- نوع ملک (در حالت ویرایش غیرفعال است) -->
     <div class="form-row">
         <label>نوع ملک:</label>
-        <select name="property_type" class="form-control" required>
+        <select name="property_type" id="id_property_type" class="form-control" {% if is_edit %}disabled{% endif %}>
             {% for value, label in property_types %}
-                <option value="{{ value }}">{{ label }}</option>
+                <option value="{{ value }}"
+                    {% if prop and prop.property_type == value %}selected{% endif %}
+                    {% if not prop and not is_edit and value == 'villa' %}selected{% endif %}>
+                    {{ label }}
+                </option>
             {% endfor %}
         </select>
+        {% if is_edit %}
+            <input type="hidden" name="property_type" value="{{ prop.property_type }}">
+            <small style="color:#6b7280;">نوع ملک قابل تغییر نیست</small>
+        {% endif %}
     </div>
 
     <!-- فیلدهای مشترک -->
     <div class="form-row">
         <label>عنوان:</label>
-        <input type="text" name="title" class="form-control" required>
+        <input type="text" name="title" class="form-control" required value="{{ prop.title|default:'' }}">
     </div>
     <div class="form-row">
         <label>توضیحات:</label>
-        <textarea name="description" class="form-control" rows="4" required></textarea>
+        <textarea name="description" class="form-control" rows="4" required>{{ prop.description|default:'' }}</textarea>
     </div>
     <div class="form-row">
         <label>قیمت (فروش):</label>
-        <input type="number" name="price" class="form-control">
+        <input type="number" name="price" class="form-control" value="{{ prop.price|default:'' }}">
     </div>
     <div class="form-row">
         <label>ودیعه:</label>
-        <input type="number" name="deposit" class="form-control">
+        <input type="number" name="deposit" class="form-control" value="{{ prop.deposit|default:'' }}">
     </div>
     <div class="form-row">
         <label>اجاره ماهیانه:</label>
-        <input type="number" name="rent" class="form-control">
+        <input type="number" name="rent" class="form-control" value="{{ prop.rent|default:'' }}">
     </div>
 
-    <!-- فیلدهای اختصاصی (به سادگی همه را نمایش می‌دهیم) -->
+    <!-- متراژ (مشترک همه) -->
     <div class="form-row">
         <label>متراژ:</label>
-        <input type="number" name="area" class="form-control">
+        <input type="number" name="area" class="form-control" required value="{{ prop.area|default:'' }}">
     </div>
-    <div class="form-row">
-        <label>کاربری:</label>
-        <input type="text" name="usage" class="form-control">
-    </div>
-    <div class="form-row">
+
+    <!-- فیلدهای مسکونی -->
+    <div class="form-row residential-only">
         <label>تعداد خواب:</label>
-        <input type="number" name="bedrooms" class="form-control">
+        <input type="number" name="bedrooms" class="form-control" value="{{ prop.bedrooms|default:0 }}">
     </div>
-    <div class="form-row">
+    <div class="form-row residential-only">
         <label>طبقه:</label>
-        <input type="number" name="floor" class="form-control">
+        <input type="number" name="floor" class="form-control" value="{{ prop.floor|default:0 }}">
     </div>
-    <div class="form-row">
+    <div class="form-row residential-only">
         <label>تعداد کل طبقات:</label>
-        <input type="number" name="total_floors" class="form-control">
+        <input type="number" name="total_floors" class="form-control" value="{{ prop.total_floors|default:0 }}">
     </div>
-    <div class="form-row">
+    <div class="form-row residential-only">
         <label>واحد در هر طبقه:</label>
-        <input type="number" name="units_per_floor" class="form-control">
+        <input type="number" name="units_per_floor" class="form-control" value="{{ prop.units_per_floor|default:0 }}">
     </div>
-    <div class="form-row">
+    <div class="form-row residential-only">
         <label>سن بنا:</label>
-        <input type="number" name="building_age" class="form-control">
+        <input type="number" name="building_age" class="form-control" value="{{ prop.building_age|default:0 }}">
     </div>
-    <div class="form-row">
+    <div class="form-row residential-only">
         <label>لوکیشن (فاز):</label>
         <select name="location_phase" class="form-control">
-            <option value="phase1">فاز یک</option>
-            <option value="phase2">فاز دو</option>
-            <option value="phase3">فاز سه</option>
-            <option value="phase4">فاز چهار</option>
-            <option value="phase5">فاز پنج</option>
-            <option value="phase6">فاز شش</option>
-            <option value="other">سایر</option>
+            <option value="phase1" {% if prop.location_phase == 'phase1' %}selected{% endif %}>فاز یک</option>
+            <option value="phase2" {% if prop.location_phase == 'phase2' %}selected{% endif %}>فاز دو</option>
+            <option value="phase3" {% if prop.location_phase == 'phase3' %}selected{% endif %}>فاز سه</option>
+            <option value="phase4" {% if prop.location_phase == 'phase4' %}selected{% endif %}>فاز چهار</option>
+            <option value="phase5" {% if prop.location_phase == 'phase5' %}selected{% endif %}>فاز پنج</option>
+            <option value="phase6" {% if prop.location_phase == 'phase6' %}selected{% endif %}>فاز شش</option>
+            <option value="other" {% if prop.location_phase == 'other' %}selected{% endif %}>سایر</option>
         </select>
     </div>
-    <div class="form-row">
+    <div class="form-row residential-only">
         <label>لوکیشن (توضیح):</label>
-        <input type="text" name="location_text" class="form-control">
+        <input type="text" name="location_text" class="form-control" value="{{ prop.location_text|default:'' }}">
     </div>
-
-    <div class="form-row checkboxes">
-        <label><input type="checkbox" name="has_elevator"> آسانسور</label>
-        <label><input type="checkbox" name="has_storage"> انباری</label>
-        <label><input type="checkbox" name="has_parking"> پارکینگ</label>
-        <label><input type="checkbox" name="has_balcony"> بالکن/تراس</label>
+    <div class="form-row checkboxes residential-only">
+        <label><input type="checkbox" name="has_elevator" {% if prop.has_elevator %}checked{% endif %}> آسانسور</label>
+        <label><input type="checkbox" name="has_storage" {% if prop.has_storage %}checked{% endif %}> انباری</label>
+        <label><input type="checkbox" name="has_parking" {% if prop.has_parking %}checked{% endif %}> پارکینگ</label>
+        <label><input type="checkbox" name="has_balcony" {% if prop.has_balcony %}checked{% endif %}> بالکن/تراس</label>
     </div>
-
-    <div class="form-row">
+    <div class="form-row residential-only">
         <label>امکانات:</label>
-        <textarea name="amenities" class="form-control" rows="2"></textarea>
+        <textarea name="amenities" class="form-control" rows="2">{{ prop.amenities|default:'' }}</textarea>
     </div>
+
+    <!-- فیلدهای صنعتی و زمین -->
+    <div class="form-row industrial-land-only">
+        <label>کاربری:</label>
+        <input type="text" name="usage" class="form-control" value="{{ prop.usage|default:'' }}">
+    </div>
+
+    <!-- چندرسانه‌ای -->
     <div class="form-row">
         <label>لینک ویدیو:</label>
-        <input type="url" name="video_url" class="form-control">
+        <input type="url" name="video_url" class="form-control" value="{{ prop.video_url|default:'' }}">
     </div>
     <div class="form-row">
         <label>فایل ویدیو:</label>
         <input type="file" name="video_file" class="form-control">
     </div>
 
-    <button type="submit" class="btn btn-primary">ثبت آگهی</button>
+    <!-- عکس‌های موجود (فقط در ویرایش) -->
+    {% if is_edit and existing_images %}
+        <div class="form-row">
+            <label>عکس‌های فعلی (برای حذف کلیک کنید):</label>
+            <div class="existing-images">
+                {% for img in existing_images %}
+                    <div class="existing-image-item">
+                        <img src="{{ img.image.url }}" alt="">
+                        <a href="{% url 'properties:property_image_delete' img.id %}" class="btn-delete-image" onclick="return confirm('این عکس حذف شود؟')">✕</a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- آپلود عکس جدید -->
+    <div class="form-row">
+        <label>{% if is_edit %}افزودن عکس‌های جدید:{% else %}عکس‌های آگهی (چندتایی):{% endif %}</label>
+        <input type="file" name="images" class="form-control" multiple accept="image/*">
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        {% if is_edit %}💾 ذخیره تغییرات{% else %}ثبت آگهی{% endif %}
+    </button>
+    <a href="{% if is_edit %}{% url 'properties:property_detail' prop.pk property_type %}{% else %}{% url 'properties:property_list' %}{% endif %}" class="btn btn-outline">انصراف</a>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const typeSelect = document.getElementById('id_property_type');
+    if (!typeSelect) return;
+
+    const residentialTypes = ['villa', 'apartment', 'commercial', 'office'];
+
+    function toggleFields() {
+        const type = typeSelect.value;
+        const isResidential = residentialTypes.includes(type);
+        const isIndustrialOrLand = (type === 'industrial' || type === 'land');
+
+        document.querySelectorAll('.residential-only').forEach(el => {
+            el.style.display = isResidential ? '' : 'none';
+        });
+
+        document.querySelectorAll('.industrial-land-only').forEach(el => {
+            el.style.display = isIndustrialOrLand ? '' : 'none';
+        });
+    }
+
+    typeSelect.addEventListener('change', toggleFields);
+    toggleFields();
+});
+</script>
 {% endblock %}
