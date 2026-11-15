@@ -126,36 +126,36 @@ def property_create(request):
             form_class = LandPropertyForm
         elif property_type == 'garden':
             form_class = GardenPropertyForm
-
-        if form_class:
-            form = form_class(request.POST, request.FILES)
-            if form.is_valid():
-                prop = form.save(commit=False)
-                prop.owner = request.user
-                prop.property_type = property_type
-                prop.status = status
-                prop.save()
-
-                # آپلود عکس‌ها
-                from .models import PropertyImage
-                from django.contrib.contenttypes.models import ContentType
-                images = request.FILES.getlist('images')
-                if images:
-                    ct = ContentType.objects.get_for_model(prop)
-                    for idx, img in enumerate(images):
-                        PropertyImage.objects.create(
-                            content_type=ct,
-                            object_id=prop.id,
-                            image=img,
-                            order=idx,
-                        )
-
-                messages.success(request, 'آگهی با موفقیت ثبت شد.')
-                return redirect('properties:property_list')
-            else:
-                messages.error(request, f'خطا در فرم: {form.errors}')
         else:
             messages.error(request, 'نوع ملک نامعتبر است.')
+            return redirect('properties:property_create')
+
+        form = form_class(request.POST, request.FILES)
+        if form.is_valid():
+            prop = form.save(commit=False)
+            prop.owner = request.user
+            prop.property_type = property_type
+            prop.status = status
+            prop.save()
+
+            # آپلود عکس‌ها
+            from .models import PropertyImage
+            from django.contrib.contenttypes.models import ContentType
+            images = request.FILES.getlist('images')
+            if images:
+                ct = ContentType.objects.get_for_model(prop)
+                for idx, img in enumerate(images):
+                    PropertyImage.objects.create(
+                        content_type=ct,
+                        object_id=prop.id,
+                        image=img,
+                        order=idx,
+                    )
+
+            messages.success(request, 'آگهی با موفقیت ثبت شد.')
+            return redirect('properties:property_list')
+        else:
+            messages.error(request, f'خطا در فرم: {form.errors}')
 
     return render(request, 'properties/property_form.html', {
         'property_types': [

@@ -36,9 +36,22 @@
         {% endif %}
 
         <!-- ویدیو -->
-        {% if prop.video_url %}
+        {% if prop.video_url or prop.video_file %}
             <div class="video-box">
-                <a href="{{ prop.video_url }}" target="_blank" class="btn btn-primary">🎬 مشاهده ویدیو</a>
+                <h3>🎬 ویدیو آگهی</h3>
+
+                {% if prop.video_file %}
+                    <video controls style="width: 100%; max-width: 640px; border-radius: 8px; margin-bottom: 10px;">
+                        <source src="{{ prop.video_file.url }}" type="video/mp4">
+                        مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
+                    </video>
+                {% endif %}
+
+                {% if prop.video_url %}
+                    <a href="{{ prop.video_url }}" target="_blank" class="btn btn-primary">
+                        🔗 مشاهده ویدیو در لینک خارجی
+                    </a>
+                {% endif %}
             </div>
         {% endif %}
 
