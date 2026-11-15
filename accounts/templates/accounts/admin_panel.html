@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}پنل مدیریت سایت{% endblock %}
+
+{% block content %}
+<div class="admin-panel-header">
+    <h1>پنل مدیریت سایت</h1>
+    <p>خوش آمدید {{ user.username }}</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <span class="stat-value">{{ stats.total_properties }}</span>
+        <span class="stat-label">کل آگهی‌ها</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">{{ stats.total_agencies }}</span>
+        <span class="stat-label">آژانس‌ها</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">{{ stats.pending_licenses }}</span>
+        <span class="stat-label">در انتظار تایید</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">{{ stats.active_licenses }}</span>
+        <span class="stat-label">لایسنس فعال</span>
+    </div>
+</div>
+
+<div class="admin-nav">
+    <a href="{% url 'accounts:admin_licenses' %}">📋 مدیریت لایسنس‌ها</a>
+    <a href="{% url 'accounts:admin_agencies' %}">🏢 مدیریت آژانس‌ها</a>
+    <a href="/admin/properties/">📝 مدیریت آگهی‌ها (ادمین)</a>
+</div>
+
+<h2>آخرین آگهی‌ها</h2>
+{% if recent_properties %}
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>عنوان</th>
+                <th>نوع</th>
+                <th>آگهی‌دهنده</th>
+                <th>تاریخ</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for prop in recent_properties %}
+                <tr>
+                    <td>{{ prop.title }}</td>
+                    <td>{{ prop.get_property_type_display }}</td>
+                    <td>{{ prop.owner.username }}</td>
+                    <td>{{ prop.created_at|date:"Y/m/d" }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>هنوز آگهی‌ای ثبت نشده.</p>
+{% endif %}
+{% endblock %}

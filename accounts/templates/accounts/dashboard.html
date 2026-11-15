@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}داشبورد آژانس{% endblock %}
+
+{% block content %}
+<h1>داشبورد آژانس</h1>
+<p>خوش آمدید، <strong>{{ user.agency_name|default:user.username }}</strong></p>
+
+<!-- بخش لایسنس -->
+<div class="license-card">
+    <h2>وضعیت لایسنس</h2>
+    {% if license %}
+        <p><strong>شماره لایسنس:</strong> {{ license.license_key }}</p>
+        <p><strong>وضعیت:</strong>
+            {% if license.status == 'active' %}
+                <span class="badge badge-success">فعال</span>
+            {% elif license.status == 'pending' %}
+                <span class="badge badge-warning">در انتظار تایید</span>
+            {% elif license.status == 'expired' %}
+                <span class="badge badge-danger">منقضی شده</span>
+            {% else %}
+                <span class="badge badge-danger">رد شده</span>
+            {% endif %}
+        </p>
+        <p><strong>تاریخ صدور:</strong> {{ license.issued_at|date:"Y/m/d" }}</p>
+        <p><strong>تاریخ انقضا:</strong> {{ license.expires_at|date:"Y/m/d" }}</p>
+        {% if license.is_valid %}
+            <p class="alert alert-success">✅ لایسنس شما معتبر است. می‌توانید آگهی ثبت کنید.</p>
+        {% else %}
+            <p class="alert alert-error">⚠️ لایسنس شما معتبر نیست. لطفاً با مدیریت سایت تماس بگیرید.</p>
+        {% endif %}
+    {% else %}
+        <p class="alert alert-warning">
+            شما هنوز لایسنس ندارید. برای دریافت لایسنس با مدیریت سایت تماس بگیرید.
+        </p>
+    {% endif %}
+</div>
+
+<!-- آمار -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <span class="stat-value">{{ stats.total }}</span>
+        <span class="stat-label">کل آگهی‌ها</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">{{ stats.active }}</span>
+        <span class="stat-label">فعال</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">{{ stats.inactive }}</span>
+        <span class="stat-label">غیرفعال</span>
+    </div>
+</div>
+
+<!-- دکمه ثبت آگهی -->
+{% if user.can_post_property %}
+    <a href="{% url 'properties:property_create' %}" class="btn btn-primary">➕ ثبت آگهی جدید</a>
+{% endif %}
+
+<!-- لیست آگهی‌ها -->
+<h2>آگهی‌های من</h2>
+{% if properties %}
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>عنوان</th>
+                <th>نوع</th>
+                <th>وضعیت</th>
+                <th>قیمت</th>
+                <th>تاریخ</th>
+                <th>عملیات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for prop in properties %}
+                <tr>
+                    <td>{{ prop.title }}</td>
+                    <td>{{ prop.get_property_type_display }}</td>
+                    <td>{{ prop.get_status_display }}</td>
+                    <td>{% if prop.price %}{{ prop.price|floatformat:"0" }}{% else %}-{% endif %}</td>
+                    <td>{{ prop.created_at|date:"Y/m/d" }}</td>
+                    <td>
+                        {% if prop.is_active %}✅{% else %}❌{% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>هنوز آگهی‌ای ثبت نکرده‌اید.</p>
+{% endif %}
+{% endblock %}

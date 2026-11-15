@@ -1,10 +1,68 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% block title %}خانه - دپارتمان املاک اندیشه{% endblock %}
 
-</body>
-</html>
+{% block content %}
+<section class="hero">
+    <h1>دپارتمان املاک اندیشه</h1>
+    <p>خرید، فروش، رهن، اجاره و تهاتر املاک در اندیشه</p>
+</section>
+
+<section class="categories">
+    <h2>دسته‌بندی‌ها</h2>
+    <div class="category-grid">
+        <a href="{% url 'properties:property_list' %}?status=sale" class="category-card">
+            <span class="icon">🏘️</span>
+            <h3>خرید و فروش</h3>
+        </a>
+        <a href="{% url 'properties:property_list' %}?status=rent" class="category-card">
+            <span class="icon">🔑</span>
+            <h3>رهن و اجاره</h3>
+        </a>
+        <a href="#" class="category-card">
+            <span class="icon">🏗️</span>
+            <h3>پروژه‌های ساخت و ساز</h3>
+        </a>
+        <a href="{% url 'properties:property_list' %}?status=barter" class="category-card">
+            <span class="icon">🔄</span>
+            <h3>تهاتر</h3>
+        </a>
+        <a href="{% url 'properties:property_list' %}?status=business" class="category-card">
+            <span class="icon">💼</span>
+            <h3>فایل کاسبی</h3>
+        </a>
+        <a href="{% url 'properties:property_list' %}?status=garden" class="category-card">
+            <span class="icon">🌳</span>
+            <h3>باغ و باغچه</h3>
+        </a>
+        <a href="#" class="category-card">
+            <span class="icon">🏦</span>
+            <h3>وام بانکی</h3>
+        </a>
+        <a href="#" class="category-card">
+            <span class="icon">🏢</span>
+            <h3>آژانس‌های املاک</h3>
+        </a>
+        <a href="#" class="category-card">
+            <span class="icon">📞</span>
+            <h3>پشتیبان</h3>
+        </a>
+    </div>
+</section>
+
+<section class="latest-properties">
+    <h2>آخرین آگهی‌ها</h2>
+    <div class="property-grid">
+        {% for prop in latest_properties %}
+            <div class="property-card">
+                <h3>{{ prop.title }}</h3>
+                <p>{{ prop.description|truncatewords:15 }}</p>
+                <span class="badge">{{ prop.get_property_type_display }}</span>
+                <span class="badge">{{ prop.get_status_display }}</span>
+                {% if prop.price %}<p class="price">{{ prop.price|floatformat:"0" }} تومان</p>{% endif %}
+            </div>
+        {% empty %}
+            <p>هنوز آگهی‌ای ثبت نشده است.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

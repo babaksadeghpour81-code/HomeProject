@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}لیست آگهی‌ها{% endblock %}
+
+{% block content %}
+<h1>آگهی‌ها</h1>
+<p>تعداد: {{ properties|length }}</p>
+
+<div class="property-grid">
+    {% for prop in properties %}
+        <div class="property-card">
+            <h3>{{ prop.title }}</h3>
+            <span class="badge">{{ prop.get_property_type_display }}</span>
+            <span class="badge">{{ prop.get_status_display }}</span>
+            <p>{{ prop.description|truncatewords:15 }}</p>
+            {% if prop.price %}<p class="price">{{ prop.price|floatformat:"0" }} تومان</p>{% endif %}
+        </div>
+    {% empty %}
+        <p>آگهی‌ای یافت نشد.</p>
+    {% endfor %}
+</div>
+{% endblock %}

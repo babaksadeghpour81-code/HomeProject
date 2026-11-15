@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}مدیریت آژانس‌ها{% endblock %}
+
+{% block content %}
+<h1>مدیریت آژانس‌ها</h1>
+<a href="{% url 'accounts:admin_panel' %}" class="btn btn-outline">← بازگشت</a>
+
+{% if agencies %}
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>نام کاربری</th>
+                <th>نام آژانس</th>
+                <th>تلفن</th>
+                <th>لایسنس</th>
+                <th>عملیات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in agencies %}
+                <tr>
+                    <td>{{ a.username }}</td>
+                    <td>{{ a.agency_name|default:"-" }}</td>
+                    <td>{{ a.agency_phone|default:"-" }}</td>
+                    <td>
+                        {% if a.has_active_license %}
+                            <span class="badge badge-success">فعال</span>
+                        {% else %}
+                            <span class="badge badge-danger">ندارد</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if not a.license_info %}
+                            <a href="{% url 'accounts:admin_create_license' a.id %}" class="btn btn-primary">صدور لایسنس</a>
+                        {% else %}
+                            <span>-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>هنوز آژانسی ثبت‌نام نکرده.</p>
+{% endif %}
+{% endblock %}

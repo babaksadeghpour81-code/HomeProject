@@ -1,1 +1,84 @@
-تمامی مسئولیت بر عهده آگهی دهنده می‌باشد و این سایت صرفاً فقط هویت آگهی دهنده را تایید می‌نماید.
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}دپارتمان املاک اندیشه{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <!-- فونت وزیرمتن -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+    <!-- هدر -->
+    <header class="site-header">
+        <div class="container header-inner">
+            <a href="{% url 'properties:home' %}" class="logo">
+                🏠 دپارتمان املاک اندیشه
+            </a>
+            <nav class="main-nav">
+                <a href="{% url 'properties:home' %}">خانه</a>
+                <a href="{% url 'properties:property_list' %}?status=sale">خرید و فروش</a>
+                <a href="{% url 'properties:property_list' %}?status=rent">رهن و اجاره</a>
+                <a href="{% url 'properties:property_list' %}?status=barter">تهاتر</a>
+                <a href="{% url 'properties:property_list' %}?status=business">فایل کاسبی</a>
+                <a href="{% url 'properties:property_list' %}?status=garden">باغ و باغچه</a>
+                <a href="#">وام بانکی</a>
+                <a href="{% url 'agencies:agency_list' %}">آژانس‌ها</a>
+                <a href="#">پشتیبان</a>
+            </nav>
+            <div class="auth-links">
+                {% if user.is_authenticated %}
+                    <span>سلام، {{ user.get_full_name|default:user.username }}</span>
+
+                    {% if user.role == 'admin' or user.role == 'superadmin' %}
+                        <a href="{% url 'accounts:admin_panel' %}" class="btn btn-primary">⚙️ پنل مدیریت</a>
+                    {% endif %}
+
+                    {% if user.role == 'agency' %}
+                        <a href="{% url 'accounts:dashboard' %}" class="btn btn-primary">📊 داشبورد</a>
+                    {% endif %}
+
+                    {% if user.can_post_property %}
+                        <a href="{% url 'properties:property_create' %}" class="btn btn-primary">➕ ثبت آگهی</a>
+                    {% endif %}
+
+                    <form method="post" action="{% url 'accounts:logout' %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline">خروج</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'accounts:login' %}" class="btn btn-outline">ورود</a>
+                    <a href="{% url 'accounts:register' %}" class="btn btn-primary">ثبت‌نام</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- پیام‌ها -->
+    {% if messages %}
+        <div class="messages container">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- محتوا -->
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- فوتر -->
+    <footer class="site-footer">
+        <div class="container">
+            <p class="disclaimer">
+                ⚠️ تمامی مسئولیت بر عهده آگهی‌دهنده می‌باشد و این سایت صرفاً فقط هویت آگهی‌دهنده را تایید می‌نماید.
+            </p>
+            <p>© {% now "Y" %} دپارتمان املاک اندیشه - تمامی حقوق محفوظ است.</p>
+        </div>
+    </footer>
+
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

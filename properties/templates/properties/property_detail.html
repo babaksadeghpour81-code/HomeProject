@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}{{ prop.title }}{% endblock %}
+
+{% block content %}
+<h1>{{ prop.title }}</h1>
+<span class="badge">{{ prop.get_property_type_display }}</span>
+<span class="badge">{{ prop.get_status_display }}</span>
+
+<p><strong>توضیحات:</strong> {{ prop.description }}</p>
+<p><strong>متراژ:</strong> {{ prop.area }} متر</p>
+{% if prop.price %}<p><strong>قیمت:</strong> {{ prop.price|floatformat:"0" }} تومان</p>{% endif %}
+{% if prop.deposit %}<p><strong>ودیعه:</strong> {{ prop.deposit|floatformat:"0" }} تومان</p>{% endif %}
+{% if prop.rent %}<p><strong>اجاره ماهیانه:</strong> {{ prop.rent|floatformat:"0" }} تومان</p>{% endif %}
+
+<p class="disclaimer">
+    ⚠️ تمامی مسئولیت بر عهده آگهی‌دهنده می‌باشد.
+</p>
+{% endblock %}

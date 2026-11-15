@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}مدیریت لایسنس‌ها{% endblock %}
+
+{% block content %}
+<h1>مدیریت لایسنس‌ها</h1>
+<a href="{% url 'accounts:admin_panel' %}" class="btn btn-outline">← بازگشت</a>
+
+{% if licenses %}
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>آژانس</th>
+                <th>کلید</th>
+                <th>وضعیت</th>
+                <th>صدور</th>
+                <th>انقضا</th>
+                <th>مبلغ</th>
+                <th>عملیات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for lic in licenses %}
+                <tr>
+                    <td>{{ lic.agency.agency_name|default:lic.agency.username }}</td>
+                    <td><code>{{ lic.license_key|slice:":12" }}...</code></td>
+                    <td>
+                        {% if lic.status == 'active' %}<span class="badge badge-success">فعال</span>
+                        {% elif lic.status == 'pending' %}<span class="badge badge-warning">در انتظار</span>
+                        {% elif lic.status == 'expired' %}<span class="badge badge-danger">منقضی</span>
+                        {% else %}<span class="badge badge-danger">رد شده</span>{% endif %}
+                    </td>
+                    <td>{{ lic.issued_at|date:"Y/m/d" }}</td>
+                    <td>{{ lic.expires_at|date:"Y/m/d" }}</td>
+                    <td>{{ lic.amount_paid|floatformat:"0" }}</td>
+                    <td>
+                        {% if lic.status == 'pending' %}
+                            <a href="{% url 'accounts:admin_license_action' lic.id 'approve' %}" class="btn btn-primary">✓ تایید</a>
+                            <a href="{% url 'accounts:admin_license_action' lic.id 'reject' %}" class="btn btn-outline">✗ رد</a>
+                        {% endif %}
+                        <a href="{% url 'accounts:admin_license_action' lic.id 'delete' %}" class="btn btn-outline" onclick="return confirm('حذف شود؟')">🗑</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>هنوز لایسنسی ثبت نشده.</p>
+{% endif %}
+{% endblock %}

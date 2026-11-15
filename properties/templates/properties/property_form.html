@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block title %}ثبت آگهی{% endblock %}
+
+{% block content %}
+<h1>ثبت آگهی جدید</h1>
+<form method="post" enctype="multipart/form-data" class="property-form">
+    {% csrf_token %}
+
+    <div class="form-row">
+        <label>نوع آگهی:</label>
+        <select name="status" class="form-control" required>
+            {% for value, label in status_choices %}
+                <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="form-row">
+        <label>نوع ملک:</label>
+        <select name="property_type" class="form-control" required>
+            {% for value, label in property_types %}
+                <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- فیلدهای مشترک -->
+    <div class="form-row">
+        <label>عنوان:</label>
+        <input type="text" name="title" class="form-control" required>
+    </div>
+    <div class="form-row">
+        <label>توضیحات:</label>
+        <textarea name="description" class="form-control" rows="4" required></textarea>
+    </div>
+    <div class="form-row">
+        <label>قیمت (فروش):</label>
+        <input type="number" name="price" class="form-control">
+    </div>
+    <div class="form-row">
+        <label>ودیعه:</label>
+        <input type="number" name="deposit" class="form-control">
+    </div>
+    <div class="form-row">
+        <label>اجاره ماهیانه:</label>
+        <input type="number" name="rent" class="form-control">
+    </div>
+
+    <!-- فیلدهای اختصاصی (به سادگی همه را نمایش می‌دهیم) -->
+    <div class="form-row">
+        <label>متراژ:</label>
+        <input type="number" name="area" class="form-control">
+    </div>
+    <div class="form-row">
+        <label>کاربری:</label>
+        <input type="text" name="usage" class="form-control">
+    </div>
+    <div class="form-row">
+        <label>تعداد خواب:</label>
+        <input type="number" name="bedrooms" class="form-control">
+    </div>
+    <div class="form-row">
+        <label>طبقه:</label>
+        <input type="number" name="floor" class="form-control">
+    </div>
+    <div class="form-row">
+        <label>تعداد کل طبقات:</label>
+        <input type="number" name="total_floors" class="form-control">
+    </div>
+    <div class="form-row">
+        <label>واحد در هر طبقه:</label>
+        <input type="number" name="units_per_floor" class="form-control">
+    </div>
+    <div class="form-row">
+        <label>سن بنا:</label>
+        <input type="number" name="building_age" class="form-control">
+    </div>
+    <div class="form-row">
+        <label>لوکیشن (فاز):</label>
+        <select name="location_phase" class="form-control">
+            <option value="phase1">فاز یک</option>
+            <option value="phase2">فاز دو</option>
+            <option value="phase3">فاز سه</option>
+            <option value="phase4">فاز چهار</option>
+            <option value="phase5">فاز پنج</option>
+            <option value="phase6">فاز شش</option>
+            <option value="other">سایر</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label>لوکیشن (توضیح):</label>
+        <input type="text" name="location_text" class="form-control">
+    </div>
+
+    <div class="form-row checkboxes">
+        <label><input type="checkbox" name="has_elevator"> آسانسور</label>
+        <label><input type="checkbox" name="has_storage"> انباری</label>
+        <label><input type="checkbox" name="has_parking"> پارکینگ</label>
+        <label><input type="checkbox" name="has_balcony"> بالکن/تراس</label>
+    </div>
+
+    <div class="form-row">
+        <label>امکانات:</label>
+        <textarea name="amenities" class="form-control" rows="2"></textarea>
+    </div>
+    <div class="form-row">
+        <label>لینک ویدیو:</label>
+        <input type="url" name="video_url" class="form-control">
+    </div>
+    <div class="form-row">
+        <label>فایل ویدیو:</label>
+        <input type="file" name="video_file" class="form-control">
+    </div>
+
+    <button type="submit" class="btn btn-primary">ثبت آگهی</button>
+</form>
+{% endblock %}

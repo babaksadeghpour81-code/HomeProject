@@ -1,10 +1,21 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% block title %}ورود{% endblock %}
 
-</body>
-</html>
+{% block content %}
+<h1>ورود به سیستم</h1>
+<form method="post" class="property-form">
+    {% csrf_token %}
+    {% if form.errors %}
+        <div class="alert alert-error">نام کاربری یا رمز عبور اشتباه است.</div>
+    {% endif %}
+    <div class="form-row">
+        <label>نام کاربری:</label>
+        <input type="text" name="username" class="form-control" required>
+    </div>
+    <div class="form-row">
+        <label>رمز عبور:</label>
+        <input type="password" name="password" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-primary">ورود</button>
+</form>
+{% endblock %}

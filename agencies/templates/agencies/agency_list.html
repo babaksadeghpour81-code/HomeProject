@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}آژانس‌های املاک{% endblock %}
+
+{% block content %}
+<h1>آژانس‌های املاک عضو</h1>
+<div class="category-grid">
+    {% for a in agencies %}
+        <div class="category-card">
+            <span class="icon">🏢</span>
+            <h3>{{ a.agency_name|default:a.username }}</h3>
+            {% if a.agency_phone %}<p>📞 {{ a.agency_phone }}</p>{% endif %}
+            {% if a.agency_address %}<p>📍 {{ a.agency_address }}</p>{% endif %}
+            {% if a.has_active_license %}
+                <span class="badge badge-success">✓ لایسنس فعال</span>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p>هنوز آژانسی ثبت‌نام نکرده.</p>
+    {% endfor %}
+</div>
+{% endblock %}
