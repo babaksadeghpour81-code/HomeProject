@@ -22,12 +22,7 @@ class BaseProperty(models.Model):
         ('land', 'زمین'),
         ('garden', 'باغ'),
     )
-    owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='properties',
-        verbose_name='آگهی‌دهنده'
-    )
+    # ↓ related_name حذف شد؛ در هر مدل فرزند جداگانه تعریف می‌شود
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, verbose_name='نوع آگهی')
     property_type = models.CharField(
         max_length=20,
@@ -37,33 +32,16 @@ class BaseProperty(models.Model):
     title = models.CharField(max_length=200, verbose_name='عنوان')
     description = models.TextField(verbose_name='توضیحات')
 
-    # قیمت‌ها (برای فروش از price، برای رهن/اجاره از deposit و rent استفاده می‌شود)
-    price = models.DecimalField(
-        max_digits=15, decimal_places=0,
-        blank=True, null=True,
-        verbose_name='قیمت کل (فروش)'
-    )
-    deposit = models.DecimalField(
-        max_digits=15, decimal_places=0,
-        blank=True, null=True,
-        verbose_name='ودیعه (رهن)'
-    )
-    rent = models.DecimalField(
-        max_digits=15, decimal_places=0,
-        blank=True, null=True,
-        verbose_name='اجاره ماهیانه'
-    )
+    price = models.DecimalField(max_digits=15, decimal_places=0, blank=True, null=True, verbose_name='قیمت کل (فروش)')
+    deposit = models.DecimalField(max_digits=15, decimal_places=0, blank=True, null=True, verbose_name='ودیعه (رهن)')
+    rent = models.DecimalField(max_digits=15, decimal_places=0, blank=True, null=True, verbose_name='اجاره ماهیانه')
 
     created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='زمان انتشار')
     updated_at = jmodels.jDateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True, verbose_name='فعال')
 
-    # فایل‌های چندرسانه‌ای
     video_url = models.URLField(blank=True, null=True, verbose_name='لینک ویدیو (اختیاری)')
-    video_file = models.FileField(
-        upload_to='properties/videos/', blank=True, null=True,
-        verbose_name='فایل ویدیو (اختیاری)'
-    )
+    video_file = models.FileField(upload_to='properties/videos/', blank=True, null=True, verbose_name='فایل ویدیو (اختیاری)')
 
     class Meta:
         abstract = True
@@ -74,20 +52,19 @@ class BaseProperty(models.Model):
 
 
 class ResidentialProperty(BaseProperty):
-    """ویلایی، آپارتمان، تجاری، اداری"""
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='residential_properties',   # ← یکتا
+        verbose_name='آگهی‌دهنده'
+    )
     LOCATION_CHOICES = (
         ('phase1', 'فاز یک'), ('phase2', 'فاز دو'), ('phase3', 'فاز سه'),
         ('phase4', 'فاز چهار'), ('phase5', 'فاز پنج'), ('phase6', 'فاز شش'),
         ('other', 'سایر'),
     )
-    location_phase = models.CharField(
-        max_length=20, choices=LOCATION_CHOICES, default='other',
-        verbose_name='لوکیشن (فاز)'
-    )
-    location_text = models.CharField(
-        max_length=200, blank=True, null=True,
-        verbose_name='لوکیشن (توضیح)'
-    )
+    location_phase = models.CharField(max_length=20, choices=LOCATION_CHOICES, default='other', verbose_name='لوکیشن (فاز)')
+    location_text = models.CharField(max_length=200, blank=True, null=True, verbose_name='لوکیشن (توضیح)')
     area = models.PositiveIntegerField(verbose_name='متراژ')
     bedrooms = models.PositiveIntegerField(default=0, verbose_name='تعداد خواب')
     floor = models.IntegerField(default=0, verbose_name='طبقه')
@@ -101,7 +78,6 @@ class ResidentialProperty(BaseProperty):
     amenities = models.TextField(blank=True, null=True, verbose_name='امکانات')
 
     def clean(self):
-        # اعتبارسنجی: اگر status = sale، price باید پر باشد؛ اگر rent، deposit/rent پر باشد
         from django.core.exceptions import ValidationError
         if self.status == 'sale' and not self.price:
             raise ValidationError('برای فروش، قیمت الزامی است.')
@@ -114,7 +90,12 @@ class ResidentialProperty(BaseProperty):
 
 
 class IndustrialProperty(BaseProperty):
-    """صنعتی"""
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='industrial_properties',   # ← یکتا
+        verbose_name='آگهی‌دهنده'
+    )
     usage = models.CharField(max_length=100, verbose_name='کاربری')
     area = models.PositiveIntegerField(verbose_name='متراژ')
 
@@ -124,7 +105,12 @@ class IndustrialProperty(BaseProperty):
 
 
 class LandProperty(BaseProperty):
-    """زمین"""
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='land_properties',   # ← یکتا
+        verbose_name='آگهی‌دهنده'
+    )
     usage = models.CharField(max_length=100, verbose_name='کاربری')
     area = models.PositiveIntegerField(verbose_name='متراژ')
 
@@ -134,7 +120,12 @@ class LandProperty(BaseProperty):
 
 
 class GardenProperty(BaseProperty):
-    """باغ و ویلا"""
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='garden_properties',   # ← یکتا
+        verbose_name='آگهی‌دهنده'
+    )
     area = models.PositiveIntegerField(verbose_name='متراژ')
 
     class Meta:
@@ -143,7 +134,6 @@ class GardenProperty(BaseProperty):
 
 
 class PropertyImage(models.Model):
-    """عکس‌های آگهی (متصل به هر مدل آگهی از طریق GenericForeignKey)"""
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')

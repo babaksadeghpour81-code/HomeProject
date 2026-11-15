@@ -5,14 +5,21 @@ from .models import User, License
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'email', 'role', 'agency_name', 'is_license_active', 'phone_number', 'is_active')
-    list_filter = ('role', 'is_license_active', 'is_active')
+    list_display = (
+        'username', 'email', 'role', 'agency_name',
+        'has_active_license_display', 'phone_number', 'is_active'
+    )
+    list_filter = ('role', 'is_active')
     search_fields = ('username', 'email', 'phone_number', 'agency_name')
     fieldsets = UserAdmin.fieldsets + (
         ('اطلاعات آژانس', {
             'fields': ('role', 'phone_number', 'agency_name', 'agency_address', 'agency_phone', 'agency_logo')
         }),
     )
+
+    @admin.display(description='لایسنس فعال؟', boolean=True)
+    def has_active_license_display(self, obj):
+        return obj.has_active_license
 
 
 @admin.register(License)
