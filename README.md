@@ -1,2 +1,20 @@
-# HomeProject
-Real Estate Website - Django
+# دپارتمان املاک اندیشه - HomeProject
+
+## نصب و راه‌اندازی
+1. `pip install -r requirements.txt`
+2. `python manage.py migrate`
+3. `python manage.py createsuperuser`
+4. `python manage.py runserver`
+
+## نقش‌ها
+- **superadmin**: مدیریت کل (پنل ادمین + پنل مدیریت سایت)
+- **admin**: مدیریت سایت (لایسنس‌ها، آژانس‌ها)
+- **agency**: آژانس املاک (داشبورد، ثبت آگهی)
+- **user**: کاربر عادی (مشاهده)
+
+## ویژگی‌ها
+- ثبت آگهی با عکس و ویدیو (چندتایی)
+- مدیریت لایسنس آژانس‌ها
+- بخش‌های: خرید/فروش، رهن/اجاره، تهاتر، کاسبی، باغ، ساخت و ساز
+- فرم وام بانکی
+- صفحات پشتیبان

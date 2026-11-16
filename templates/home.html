@@ -54,11 +54,49 @@
     <div class="property-grid">
         {% for prop in latest_properties %}
             <div class="property-card">
-                <h3>{{ prop.title }}</h3>
-                <p>{{ prop.description|truncatewords:15 }}</p>
-                <span class="badge">{{ prop.get_property_type_display }}</span>
-                <span class="badge">{{ prop.get_status_display }}</span>
-                {% if prop.price %}<p class="price">{{ prop.price|floatformat:"0" }} تومان</p>{% endif %}
+                <!-- عکس شاخص -->
+                {% if prop.images.count > 0 %}
+                    <img src="{{ prop.images.first.image.url }}" alt="{{ prop.title }}" class="property-thumb">
+                {% else %}
+                    <div class="property-thumb placeholder-thumb">🏠</div>
+                {% endif %}
+
+                <div class="property-card-body">
+                    <h3>{{ prop.title }}</h3>
+
+                    <div class="badges">
+                        <span class="badge">{{ prop.get_property_type_display }}</span>
+                        <span class="badge">{{ prop.get_status_display }}</span>
+                    </div>
+
+                    <p class="property-desc">{{ prop.description|truncatewords:10 }}</p>
+
+                    <div class="property-meta">
+                        {% if prop.area %}<span>📐 {{ prop.area }} متر</span>{% endif %}
+                        {% if prop.bedrooms %}<span>🛏 {{ prop.bedrooms }} خواب</span>{% endif %}
+                    </div>
+
+                    <div class="property-price">
+                        {% if prop.status == 'sale' and prop.price %}
+                            💰 {{ prop.price|floatformat:"0" }} تومان
+                        {% elif prop.status == 'rent' %}
+                            {% if prop.deposit %}🔒 {{ prop.deposit|floatformat:"0" }}{% endif %}
+                            {% if prop.rent %} | {{ prop.rent|floatformat:"0" }}{% endif %}
+                        {% elif prop.price %}
+                            💰 {{ prop.price|floatformat:"0" }} تومان
+                        {% endif %}
+                    </div>
+
+                    {% if prop.is_residential %}
+                        <a href="{% url 'properties:property_detail' prop.pk 'residential' %}" class="btn btn-primary btn-block">مشاهده</a>
+                    {% elif prop.property_type == 'industrial' %}
+                        <a href="{% url 'properties:property_detail' prop.pk 'industrial' %}" class="btn btn-primary btn-block">مشاهده</a>
+                    {% elif prop.property_type == 'land' %}
+                        <a href="{% url 'properties:property_detail' prop.pk 'land' %}" class="btn btn-primary btn-block">مشاهده</a>
+                    {% elif prop.property_type == 'garden' %}
+                        <a href="{% url 'properties:property_detail' prop.pk 'garden' %}" class="btn btn-primary btn-block">مشاهده</a>
+                    {% endif %}
+                </div>
             </div>
         {% empty %}
             <p>هنوز آگهی‌ای ثبت نشده است.</p>

@@ -10,7 +10,7 @@
             <h3>{{ a.agency_name|default:a.username }}</h3>
             {% if a.agency_phone %}<p>📞 {{ a.agency_phone }}</p>{% endif %}
             {% if a.agency_address %}<p>📍 {{ a.agency_address }}</p>{% endif %}
-            {% if a.has_active_license %}
+            {% if a.has_active_license and user.is_authenticated and user.role in 'admin,superadmin' %}
                 <span class="badge badge-success">✓ لایسنس فعال</span>
             {% endif %}
         </div>

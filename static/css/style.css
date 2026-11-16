@@ -103,8 +103,8 @@ body {
 .categories h2 { margin-bottom: 20px; }
 .category-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
 }
 .category-card {
     background: white;
@@ -126,15 +126,23 @@ body {
 /* Properties */
 .property-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 20px;
     margin: 20px 0;
 }
 .property-card {
     background: white;
-    border-radius: 10px;
-    padding: 15px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.property-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
 }
 .property-card h3 { font-size: 1.05rem; margin-bottom: 8px; }
 .badge {
@@ -340,51 +348,105 @@ body {
     color: white;
 }
 
-/* Property thumb */
+/* عکس شاخص */
 .property-thumb {
     width: 100%;
-    height: 180px;
+    height: 170px;
     object-fit: cover;
-    border-radius: 8px 8px 0 0;
-    margin: -15px -15px 10px -15px;
-    width: calc(100% + 30px);
+    display: block;
+    background: #e5e7eb;
+    flex-shrink: 0;
 }
 .placeholder-thumb {
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 3rem;
-    background: #e5e7eb;
     color: #9ca3af;
+    background: linear-gradient(135deg, #e5e7eb, #f3f4f6);
 }
 .property-card { overflow: hidden; }
-.property-card-body { padding: 0 5px; }
+/* بدنه کارت */
+.property-card-body {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    gap: 8px;
+}
+
+.property-card-body h3 {
+    font-size: 1rem;
+    color: #111827;
+    line-height: 1.5;
+    margin: 0;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;          /* حداکثر ۲ خط */
+    -webkit-box-orient: vertical;
+}
+.property-desc {
+    font-size: 0.85rem;
+    color: #6b7280;
+    line-height: 1.6;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    margin: 0;
+}
 
 /* Badges */
-.badges { margin-bottom: 10px; }
-.badge-info { background: #dbeafe; color: #1e40af; }
+.badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 0;
+}
+.badge {
+    display: inline-block;
+    background: #e0e7ff;
+    color: #3730a3;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 500;
+}
+.badge-info {
+    background: #dbeafe;
+    color: #1e40af;
+}
 
 /* Property meta */
 .property-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    font-size: 0.85rem;
+    gap: 8px;
+    font-size: 0.8rem;
     color: #6b7280;
-    margin: 10px 0;
 }
+.property-meta span {
+    background: #f3f4f6;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
 .property-price {
     color: #059669;
-    font-weight: bold;
-    margin: 10px 0;
-    padding: 10px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 8px 10px;
     background: #f0fdf4;
     border-radius: 6px;
     text-align: center;
+    margin-top: auto;               /* ← به پایین کارت می‌چسبد */
 }
 
 /* Button block */
 .btn-block { display: block; width: 100%; text-align: center; }
+.property-card .btn {
+    margin-top: 8px;
+}
 
 /* Empty state */
 .empty-state {
