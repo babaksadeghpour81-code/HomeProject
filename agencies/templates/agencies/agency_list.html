@@ -6,15 +6,19 @@
 <div class="category-grid">
     {% for a in agencies %}
         <div class="category-card">
-            <span class="icon">🏢</span>
-            <h3>{{ a.agency_name|default:a.username }}</h3>
+            <a href="{% url 'agencies:agency_detail' a.id %}" style="text-decoration: none; color: inherit;">
+                <span class="icon">🏢</span>
+                <h3>{{ a.agency_name|default:a.username }}</h3>
+            </a>
             {% if a.agency_phone %}<p>📞 {{ a.agency_phone }}</p>{% endif %}
             {% if a.agency_address %}<p>📍 {{ a.agency_address }}</p>{% endif %}
-            {% if user.is_authenticated and user.role == 'admin' or user.role == 'superadmin' %}
-                {% if a.has_active_license %}
-                    <span class="badge badge-success">✓ لایسنس فعال</span>
-                {% else %}
-                    <span class="badge badge-danger">✗ بدون لایسنس</span>
+            {% if user.is_authenticated %}
+                {% if user.role == 'admin' or user.role == 'superadmin' %}
+                    {% if a.has_active_license %}
+                        <span class="badge badge-success">✓ لایسنس فعال</span>
+                    {% else %}
+                        <span class="badge badge-danger">✗ بدون لایسنس</span>
+                    {% endif %}
                 {% endif %}
             {% endif %}
         </div>

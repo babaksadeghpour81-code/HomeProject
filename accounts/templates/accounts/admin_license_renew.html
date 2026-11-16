@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}تمدید لایسنس{% endblock %}
+
+{% block content %}
+<h1>تمدید لایسنس {{ license.agency.agency_name }}</h1>
+<div class="license-card">
+    <p><strong>تاریخ انقضای فعلی:</strong> {{ license.expires_at|date:"Y/m/d" }}</p>
+</div>
+
+<form method="post" class="property-form">
+    {% csrf_token %}
+    <div class="form-row">
+        <label>مدت تمدید (روز):</label>
+        <input type="number" name="duration_days" value="365" class="form-control" required>
+    </div>
+    <div class="form-row">
+        <label>مبلغ پرداختی (تومان):</label>
+        <input type="number" name="amount" value="0" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-primary">تمدید لایسنس</button>
+    <a href="{% url 'accounts:admin_licenses' %}" class="btn btn-outline" style="color:#1e3a8a; border-color:#1e3a8a;">انصراف</a>
+</form>
+{% endblock %}

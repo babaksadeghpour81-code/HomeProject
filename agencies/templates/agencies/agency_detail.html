@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}{{ agency.agency_name|default:agency.username }}{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+    <a href="{% url 'properties:home' %}">خانه</a>
+    <span>›</span>
+    <a href="{% url 'agencies:agency_list' %}">آژانس‌ها</a>
+    <span>›</span>
+    <span>{{ agency.agency_name|default:agency.username }}</span>
+</div>
+
+<!-- کارت پروفایل آژانس -->
+<div class="agency-profile-header">
+    <div class="agency-logo-box">
+        {% if agency.agency_logo %}
+            <img src="{{ agency.agency_logo.url }}" alt="{{ agency.agency_name }}" class="agency-logo">
+        {% else %}
+            <div class="agency-logo-placeholder">🏢</div>
+        {% endif %}
+    </div>
+
+    <div class="agency-info">
+        <h1>{{ agency.agency_name|default:agency.username }}</h1>
+
+        {% if license and license.is_valid %}
+            <span class="badge badge-success">✓ آژانس تایید شده</span>
+        {% endif %}
+
+        <div class="agency-contact">
+            {% if agency.agency_phone %}
+                <p>📞 <a href="tel:{{ agency.agency_phone }}">{{ agency.agency_phone }}</a></p>
+            {% endif %}
+            {% if agency.phone_number %}
+                <p>📱 <a href="tel:{{ agency.phone_number }}">{{ agency.phone_number }}</a></p>
+            {% endif %}
+            {% if agency.email %}
+                <p>📧 <a href="mailto:{{ agency.email }}">{{ agency.email }}</a></p>
+            {% endif %}
+            {% if agency.agency_address %}
+                <p>📍 {{ agency.agency_address }}</p>
+            {% endif %}
+            <p>📅 عضویت از: {{ agency.date_joined|date:"Y/m/d" }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- آگهی‌های آژانس -->
+<div class="agency-properties">
+    <h2>آگهی‌های این آژانس ({{ paginator.count }})</h2>
+
+    {% if page_obj.object_list %}
+        <div class="property-grid">
+            {% for prop in page_obj %}
+                <div class="property-card">
+                    {% if prop.images.count > 0 %}
+                        <img src="{{ prop.images.first.image.url }}" alt="{{ prop.title }}" class="property-thumb">
+                    {% else %}
+                        <div class="property-thumb placeholder-thumb">🏠</div>
+                    {% endif %}
+
+                    <div class="property-card-body">
+                        <h3>{{ prop.title }}</h3>
+
+                        <div class="badges">
+                            <span class="badge">{{ prop.get_property_type_display }}</span>
+                            <span class="badge">{{ prop.get_status_display }}</span>
+                        </div>
+
+                        <p class="property-desc">{{ prop.description|truncatewords:10 }}</p>
+
+                        <div class="property-meta">
+                            {% if prop.area %}<span>📐 {{ prop.area }} متر</span>{% endif %}
+                            {% if prop.bedrooms %}<span>🛏 {{ prop.bedrooms }} خواب</span>{% endif %}
+                        </div>
+
+                        <div class="property-price">
+                            {% if prop.status == 'sale' and prop.price %}
+                                💰 {{ prop.price|floatformat:"0" }} تومان
+                            {% elif prop.status == 'rent' %}
+                                {% if prop.deposit %}🔒 {{ prop.deposit|floatformat:"0" }}{% endif %}
+                                {% if prop.rent %} | {{ prop.rent|floatformat:"0" }}{% endif %}
+                            {% elif prop.price %}
+                                💰 {{ prop.price|floatformat:"0" }} تومان
+                            {% endif %}
+                        </div>
+
+                        {% if prop.is_residential %}
+                            <a href="{% url 'properties:property_detail' prop.pk 'residential' %}" class="btn btn-primary btn-block">مشاهده</a>
+                        {% elif prop.property_type == 'industrial' %}
+                            <a href="{% url 'properties:property_detail' prop.pk 'industrial' %}" class="btn btn-primary btn-block">مشاهده</a>
+                        {% elif prop.property_type == 'land' %}
+                            <a href="{% url 'properties:property_detail' prop.pk 'land' %}" class="btn btn-primary btn-block">مشاهده</a>
+                        {% elif prop.property_type == 'garden' %}
+                            <a href="{% url 'properties:property_detail' prop.pk 'garden' %}" class="btn btn-primary btn-block">مشاهده</a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- صفحه‌بندی -->
+        {% if page_obj.has_other_pages %}
+        <nav class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="page-link">← قبلی</a>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="page-link active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}" class="page-link">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="page-link">بعدی →</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <span class="empty-icon">🏠</span>
+            <h2>هنوز آگهی‌ای ثبت نشده</h2>
+            <p>این آژانس هنوز آگهی فعالی ندارد.</p>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

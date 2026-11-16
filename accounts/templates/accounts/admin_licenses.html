@@ -38,6 +38,7 @@
                             <a href="{% url 'accounts:admin_license_action' lic.id 'reject' %}" class="btn btn-outline">✗ رد</a>
                         {% endif %}
                         <a href="{% url 'accounts:admin_license_action' lic.id 'delete' %}" class="btn btn-outline" onclick="return confirm('حذف شود؟')">🗑</a>
+                        <a href="{% url 'accounts:admin_license_renew' lic.id %}" class="btn btn-sm btn-primary">🔄 تمدید</a>
                     </td>
                 </tr>
             {% endfor %}

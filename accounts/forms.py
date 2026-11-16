@@ -40,3 +40,36 @@ class RegisterForm(forms.ModelForm):
         if commit:
             user.save()
         return user
+
+
+# ============================================================
+# فرم ویرایش پروفایل آژانس (اضافه شد)
+# ============================================================
+
+class AgencyProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = [
+            'agency_name',
+            'agency_address',
+            'agency_phone',
+            'phone_number',
+            'email',
+            'agency_logo',
+        ]
+        widgets = {
+            'agency_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'agency_address': forms.TextInput(attrs={'class': 'form-control'}),
+            'agency_phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'agency_logo': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+        }
+        labels = {
+            'agency_name': 'نام آژانس',
+            'agency_address': 'آدرس آژانس',
+            'agency_phone': 'تلفن آژانس',
+            'phone_number': 'شماره تماس شخصی',
+            'email': 'ایمیل',
+            'agency_logo': 'لوگوی آژانس',
+        }

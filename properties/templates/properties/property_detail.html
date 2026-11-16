@@ -130,20 +130,18 @@
         <!-- اطلاعات آگهی‌دهنده -->
         <div class="info-box">
             <h3>🏢 آگهی‌دهنده</h3>
-            {% if prop.owner.agency_name %}
-                <p><strong>{{ prop.owner.agency_name }}</strong></p>
+            {% if prop.owner.role == 'agency' %}
+                <p>
+                    <a href="{% url 'agencies:agency_detail' prop.owner.id %}" style="color: #1e3a8a; font-weight: bold; text-decoration: none;">
+                        {{ prop.owner.agency_name|default:prop.owner.username }} →
+                    </a>
+                </p>
             {% else %}
-                <p>{{ prop.owner.username }}</p>
+                <p>{{ prop.owner.agency_name|default:prop.owner.username }}</p>
             {% endif %}
-            {% if prop.owner.agency_phone %}
-                <p>📞 <a href="tel:{{ prop.owner.agency_phone }}">{{ prop.owner.agency_phone }}</a></p>
-            {% endif %}
-            {% if prop.owner.phone_number %}
-                <p>📱 <a href="tel:{{ prop.owner.phone_number }}">{{ prop.owner.phone_number }}</a></p>
-            {% endif %}
-            {% if prop.owner.agency_address %}
-                <p>📍 {{ prop.owner.agency_address }}</p>
-            {% endif %}
+            {% if prop.owner.agency_phone %}<p>📞 <a href="tel:{{ prop.owner.agency_phone }}">{{ prop.owner.agency_phone }}</a></p>{% endif %}
+            {% if prop.owner.phone_number %}<p>📱 <a href="tel:{{ prop.owner.phone_number }}">{{ prop.owner.phone_number }}</a></p>{% endif %}
+            {% if prop.owner.agency_address %}<p>📍 {{ prop.owner.agency_address }}</p>{% endif %}
         </div>
 
         <!-- اطلاعات آگهی -->

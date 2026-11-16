@@ -58,8 +58,18 @@ def dashboard(request):
         'inactive': sum(1 for p in my_properties if not p.is_active),
     }
 
+    license_obj = getattr(request.user, 'license_info', None)
+    license_warning = None
+    if license_obj and license_obj.is_valid:
+        days_left = (license_obj.expires_at - timezone.now()).days
+        if days_left <= 30:
+            license_warning = f'⚠️ لایسنس شما تا {days_left} روز دیگر منقضی می‌شود. لطفاً تمدید کنید.'
+    elif license_obj and not license_obj.is_valid:
+        license_warning = '⚠️ لایسنس شما منقضی شده. برای ثبت آگهی با مدیریت تماس بگیرید.'
+
     context = {
         'license': license_obj,
+        'license_warning': license_warning,
         'properties': my_properties,
         'stats': stats,
         'now': timezone.now(),
@@ -265,4 +275,52 @@ def admin_property_action(request, property_type, pk, action):
         messages.info(request, f'آگهی حذف شد.')
 
     return redirect('accounts:admin_properties')
+
+@login_required
+def admin_license_renew(request, license_id):
+    """تمدید لایسنس توسط مدیر"""
+    if request.user.role not in ('admin', 'superadmin'):
+        return HttpResponseForbidden('دسترسی غیرمجاز')
+
+    license_obj = get_object_or_404(License, id=license_id)
+
+    if request.method == 'POST':
+        from datetime import timedelta
+        duration_days = int(request.POST.get('duration_days', 365))
+        amount = int(request.POST.get('amount', 0))
+
+        # اگر لایسنس منقضی شده، از الان تمدید کن
+        if license_obj.expires_at < timezone.now():
+            license_obj.expires_at = timezone.now() + timedelta(days=duration_days)
+        else:
+            license_obj.expires_at += timedelta(days=duration_days)
+
+        license_obj.is_active = True
+        license_obj.status = 'active'
+        license_obj.amount_paid += amount
+        license_obj.save()
+
+        messages.success(request, f'لایسنس {license_obj.agency.agency_name} به مدت {duration_days} روز تمدید شد.')
+        return redirect('accounts:admin_licenses')
+
+    return render(request, 'accounts/admin_license_renew.html', {'license': license_obj})
+
+@login_required
+def profile_edit(request):
+    """ویرایش پروفایل آژانس"""
+    if request.user.role not in ('agency', 'admin', 'superadmin'):
+        return HttpResponseForbidden('دسترسی غیرمجاز')
+
+    from .forms import AgencyProfileForm
+
+    if request.method == 'POST':
+        form = AgencyProfileForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'پروفایل با موفقیت به‌روزرسانی شد.')
+            return redirect('accounts:profile_edit')
+    else:
+        form = AgencyProfileForm(instance=request.user)
+
+    return render(request, 'accounts/profile_edit.html', {'form': form})
 

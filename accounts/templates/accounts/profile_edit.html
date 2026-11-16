@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}ویرایش پروفایل{% endblock %}
+
+{% block content %}
+<h1>ویرایش پروفایل</h1>
+
+<form method="post" enctype="multipart/form-data" class="property-form">
+    {% csrf_token %}
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {% if form.instance.agency_logo %}
+        <div class="form-row">
+            <label>لوگوی فعلی:</label>
+            <img src="{{ form.instance.agency_logo.url }}" alt="logo" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+        </div>
+    {% endif %}
+
+    {% for field in form %}
+        <div class="form-row">
+            <label>{{ field.label }}:</label>
+            {{ field }}
+            {% if field.errors %}
+                <div class="alert alert-error">{{ field.errors }}</div>
+            {% endif %}
+        </div>
+    {% endfor %}
+
+    <button type="submit" class="btn btn-primary">💾 ذخیره تغییرات</button>
+    <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline" style="color:#1e3a8a; border-color:#1e3a8a;">انصراف</a>
+</form>
+{% endblock %}

@@ -3,7 +3,12 @@
 
 {% block content %}
 <h1>داشبورد آژانس</h1>
+<a href="{% url 'accounts:profile_edit' %}" class="btn btn-outline" style="color: #1e3a8a; border-color: #1e3a8a;">✏️ ویرایش پروفایل</a>
 <p>خوش آمدید، <strong>{{ user.agency_name|default:user.username }}</strong></p>
+
+{% if license_warning %}
+    <div class="alert alert-error">{{ license_warning }}</div>
+{% endif %}
 
 <!-- بخش لایسنس -->
 <div class="license-card">
