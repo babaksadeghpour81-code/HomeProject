@@ -20,7 +20,7 @@
         {% elif current_status == 'garden' %}🌳 باغ و باغچه
         {% else %}📋 همه آگهی‌ها{% endif %}
     </h1>
-    <p>تعداد نتایج: <strong>{{ properties|length }}</strong></p>
+    <p>تعداد نتایج: <strong>{{ paginator.count }}</strong></p>
 </div>
 
 <!-- فیلتر سریع -->
@@ -196,5 +196,28 @@
         {% endif %}
     </div>
 {% endif %}
+<!-- ===== صفحه‌بندی ===== -->
+{% if page_obj.has_other_pages %}
+<nav class="pagination">
+    {% if page_obj.has_previous %}
+        <a href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.previous_page_number }}" class="page-link">← قبلی</a>
+    {% else %}
+        <span class="page-link disabled">← قبلی</span>
+    {% endif %}
 
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+            <span class="page-link active">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <a href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ num }}" class="page-link">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+        <a href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.next_page_number }}" class="page-link">بعدی →</a>
+    {% else %}
+        <span class="page-link disabled">بعدی →</span>
+    {% endif %}
+</nav>
+{% endif %}
 {% endblock %}

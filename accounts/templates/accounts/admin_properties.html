@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block title %}مدیریت آگهی‌ها{% endblock %}
+
+{% block content %}
+<div class="admin-panel-header">
+    <h1>مدیریت آگهی‌ها</h1>
+    <p>تعداد کل: {{ paginator.count }}</p>
+</div>
+
+<div class="admin-nav">
+    <a href="{% url 'accounts:admin_properties' %}" class="{% if not current_status %}active{% endif %}">همه</a>
+    <a href="{% url 'accounts:admin_properties' %}?status=active" class="{% if current_status == 'active' %}active{% endif %}">فعال</a>
+    <a href="{% url 'accounts:admin_properties' %}?status=inactive" class="{% if current_status == 'inactive' %}active{% endif %}">غیرفعال</a>
+    <a href="{% url 'accounts:admin_panel' %}">← بازگشت به پنل</a>
+</div>
+
+{% if page_obj.object_list %}
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>عنوان</th>
+                <th>نوع</th>
+                <th>آگهی‌دهنده</th>
+                <th>تاریخ</th>
+                <th>وضعیت</th>
+                <th>عملیات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for prop in page_obj %}
+                <tr>
+                    <td>{{ prop.title }}</td>
+                    <td>{{ prop.get_property_type_display }}</td>
+                    <td>{{ prop.owner.agency_name|default:prop.owner.username }}</td>
+                    <td>{{ prop.created_at|date:"Y/m/d" }}</td>
+                    <td>
+                        {% if prop.is_active %}
+                            <span class="badge badge-success">فعال</span>
+                        {% else %}
+                            <span class="badge badge-danger">غیرفعال</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if prop.is_residential %}
+                            {% if prop.is_active %}
+                                <a href="{% url 'accounts:admin_property_action' 'residential' prop.pk 'deactivate' %}" class="btn btn-sm btn-danger">غیرفعال</a>
+                            {% else %}
+                                <a href="{% url 'accounts:admin_property_action' 'residential' prop.pk 'activate' %}" class="btn btn-sm btn-primary">فعال</a>
+                            {% endif %}
+                            <a href="{% url 'accounts:admin_property_action' 'residential' prop.pk 'delete' %}" class="btn btn-sm btn-danger" onclick="return confirm('حذف شود؟')">🗑</a>
+                        {% elif prop.property_type == 'industrial' %}
+                            {% if prop.is_active %}
+                                <a href="{% url 'accounts:admin_property_action' 'industrial' prop.pk 'deactivate' %}" class="btn btn-sm btn-danger">غیرفعال</a>
+                            {% else %}
+                                <a href="{% url 'accounts:admin_property_action' 'industrial' prop.pk 'activate' %}" class="btn btn-sm btn-primary">فعال</a>
+                            {% endif %}
+                            <a href="{% url 'accounts:admin_property_action' 'industrial' prop.pk 'delete' %}" class="btn btn-sm btn-danger" onclick="return confirm('حذف شود؟')">🗑</a>
+                        {% elif prop.property_type == 'land' %}
+                            {% if prop.is_active %}
+                                <a href="{% url 'accounts:admin_property_action' 'land' prop.pk 'deactivate' %}" class="btn btn-sm btn-danger">غیرفعال</a>
+                            {% else %}
+                                <a href="{% url 'accounts:admin_property_action' 'land' prop.pk 'activate' %}" class="btn btn-sm btn-primary">فعال</a>
+                            {% endif %}
+                            <a href="{% url 'accounts:admin_property_action' 'land' prop.pk 'delete' %}" class="btn btn-sm btn-danger" onclick="return confirm('حذف شود؟')">🗑</a>
+                        {% elif prop.property_type == 'garden' %}
+                            {% if prop.is_active %}
+                                <a href="{% url 'accounts:admin_property_action' 'garden' prop.pk 'deactivate' %}" class="btn btn-sm btn-danger">غیرفعال</a>
+                            {% else %}
+                                <a href="{% url 'accounts:admin_property_action' 'garden' prop.pk 'activate' %}" class="btn btn-sm btn-primary">فعال</a>
+                            {% endif %}
+                            <a href="{% url 'accounts:admin_property_action' 'garden' prop.pk 'delete' %}" class="btn btn-sm btn-danger" onclick="return confirm('حذف شود؟')">🗑</a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if page_obj.has_other_pages %}
+    <nav class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.previous_page_number }}" class="page-link">← قبلی</a>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <span class="page-link active">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ num }}" class="page-link">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+            <a href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.next_page_number }}" class="page-link">بعدی →</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+
+{% else %}
+    <div class="empty-state">
+        <span class="empty-icon">🔍</span>
+        <h2>آگهی‌ای یافت نشد</h2>
+    </div>
+{% endif %}
+{% endblock %}

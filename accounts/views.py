@@ -68,38 +68,31 @@ def dashboard(request):
 
 @login_required
 def admin_panel(request):
-    """پنل مدیریت سایت — فقط admin و superadmin"""
     if request.user.role not in ('admin', 'superadmin'):
         return HttpResponseForbidden('دسترسی غیرمجاز')
 
-    # آمار کلی
     from properties.models import (
         ResidentialProperty, IndustrialProperty, LandProperty, GardenProperty
     )
-    total_properties = sum(
-        Model.objects.count()
-        for Model in [ResidentialProperty, IndustrialProperty, LandProperty, GardenProperty]
-    )
-    total_agencies = User.objects.filter(role='agency').count()
-    pending_licenses = License.objects.filter(status='pending').count()
-    active_licenses = License.objects.filter(status='active', is_active=True).count()
+    all_props = []
+    for Model in [ResidentialProperty, IndustrialProperty, LandProperty, GardenProperty]:
+        all_props += list(Model.objects.all())
 
     stats = {
-        'total_properties': total_properties,
-        'total_agencies': total_agencies,
-        'pending_licenses': pending_licenses,
-        'active_licenses': active_licenses,
+        'total_properties': len(all_props),
+        'active_properties': sum(1 for p in all_props if p.is_active),
+        'inactive_properties': sum(1 for p in all_props if not p.is_active),
+        'total_agencies': User.objects.filter(role='agency').count(),
+        'pending_licenses': License.objects.filter(status='pending').count(),
+        'active_licenses': License.objects.filter(status='active', is_active=True).count(),
     }
 
     # آخرین آگهی‌ها
-    recent = []
-    for Model in [ResidentialProperty, IndustrialProperty, LandProperty, GardenProperty]:
-        recent += list(Model.objects.all()[:5])
-    recent.sort(key=lambda x: x.created_at, reverse=True)
+    recent = sorted(all_props, key=lambda x: x.created_at, reverse=True)[:10]
 
     return render(request, 'accounts/admin_panel.html', {
         'stats': stats,
-        'recent_properties': recent[:10],
+        'recent_properties': recent,
     })
 
 
@@ -190,4 +183,86 @@ def admin_create_license(request, user_id):
         return redirect('accounts:admin_agencies')
 
     return render(request, 'accounts/admin_create_license.html', {'agency': agency})
+
+@login_required
+def admin_properties(request):
+    """مدیریت همه آگهی‌ها"""
+    if request.user.role not in ('admin', 'superadmin'):
+        return HttpResponseForbidden('دسترسی غیرمجاز')
+
+    from properties.models import (
+        ResidentialProperty, IndustrialProperty, LandProperty, GardenProperty
+    )
+    from django.core.paginator import Paginator
+
+    all_props = []
+    for Model in [ResidentialProperty, IndustrialProperty, LandProperty, GardenProperty]:
+        all_props += list(Model.objects.all())
+
+    # مرتب‌سازی: جدیدترین اول
+    all_props.sort(key=lambda x: x.created_at, reverse=True)
+
+    # فیلتر بر اساس وضعیت
+    status_filter = request.GET.get('status', '')
+    if status_filter == 'active':
+        all_props = [p for p in all_props if p.is_active]
+    elif status_filter == 'inactive':
+        all_props = [p for p in all_props if not p.is_active]
+
+    # صفحه‌بندی
+    paginator = Paginator(all_props, 15)
+    page_number = request.GET.get('page', 1)
+    try:
+        page_obj = paginator.page(page_number)
+    except Exception:
+        page_obj = paginator.page(1)
+
+    return render(request, 'accounts/admin_properties.html', {
+        'page_obj': page_obj,
+        'paginator': paginator,
+        'current_status': status_filter,
+        'query_string': request.GET.urlencode() if request.GET else '',
+    })
+
+
+@login_required
+def admin_property_action(request, property_type, pk, action):
+    """تایید/رد/حذف آگهی توسط مدیر"""
+    if request.user.role not in ('admin', 'superadmin'):
+        return HttpResponseForbidden('دسترسی غیرمجاز')
+
+    from properties.models import (
+        ResidentialProperty, IndustrialProperty, LandProperty, GardenProperty, PropertyImage
+    )
+    from django.contrib.contenttypes.models import ContentType
+
+    model_map = {
+        'residential': ResidentialProperty,
+        'industrial': IndustrialProperty,
+        'land': LandProperty,
+        'garden': GardenProperty,
+    }
+    Model = model_map.get(property_type)
+    if not Model:
+        messages.error(request, 'نوع ملک نامعتبر است.')
+        return redirect('accounts:admin_properties')
+
+    prop = get_object_or_404(Model, pk=pk)
+
+    if action == 'activate':
+        prop.is_active = True
+        prop.save()
+        messages.success(request, f'آگهی «{prop.title}» فعال شد.')
+    elif action == 'deactivate':
+        prop.is_active = False
+        prop.save()
+        messages.warning(request, f'آگهی «{prop.title}» غیرفعال شد.')
+    elif action == 'delete':
+        # حذف عکس‌ها
+        ct = ContentType.objects.get_for_model(prop)
+        PropertyImage.objects.filter(content_type=ct, object_id=prop.id).delete()
+        prop.delete()
+        messages.info(request, f'آگهی حذف شد.')
+
+    return redirect('accounts:admin_properties')
 

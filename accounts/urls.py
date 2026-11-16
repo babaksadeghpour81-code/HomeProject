@@ -16,4 +16,8 @@ urlpatterns = [
     path('admin-panel/licenses/<int:license_id>/<str:action>/', views.admin_license_action, name='admin_license_action'),
     path('admin-panel/agencies/', views.admin_agencies, name='admin_agencies'),
     path('admin-panel/agencies/<int:user_id>/create-license/', views.admin_create_license, name='admin_create_license'),
+    # مدیریت آگهی‌ها
+    path('admin-panel/properties/', views.admin_properties, name='admin_properties'),
+    path('admin-panel/properties/<str:property_type>/<int:pk>/<str:action>/', views.admin_property_action,
+         name='admin_property_action'),
 ]

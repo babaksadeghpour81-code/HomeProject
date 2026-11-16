@@ -13,15 +13,23 @@
         <span class="stat-label">کل آگهی‌ها</span>
     </div>
     <div class="stat-card">
+        <span class="stat-value" style="color: #059669;">{{ stats.active_properties }}</span>
+        <span class="stat-label">فعال</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value" style="color: #dc2626;">{{ stats.inactive_properties }}</span>
+        <span class="stat-label">غیرفعال</span>
+    </div>
+    <div class="stat-card">
         <span class="stat-value">{{ stats.total_agencies }}</span>
         <span class="stat-label">آژانس‌ها</span>
     </div>
     <div class="stat-card">
-        <span class="stat-value">{{ stats.pending_licenses }}</span>
+        <span class="stat-value" style="color: #f59e0b;">{{ stats.pending_licenses }}</span>
         <span class="stat-label">در انتظار تایید</span>
     </div>
     <div class="stat-card">
-        <span class="stat-value">{{ stats.active_licenses }}</span>
+        <span class="stat-value" style="color: #059669;">{{ stats.active_licenses }}</span>
         <span class="stat-label">لایسنس فعال</span>
     </div>
 </div>
@@ -29,6 +37,7 @@
 <div class="admin-nav">
     <a href="{% url 'accounts:admin_licenses' %}">📋 مدیریت لایسنس‌ها</a>
     <a href="{% url 'accounts:admin_agencies' %}">🏢 مدیریت آژانس‌ها</a>
+    <a href="{% url 'accounts:admin_properties' %}">📋 مدیریت آگهی‌ها</a>
     <a href="/admin/properties/">📝 مدیریت آگهی‌ها (ادمین)</a>
 </div>
 

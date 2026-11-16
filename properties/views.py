@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.http import HttpResponseForbidden
 from .models import ConstructionProject
 from .forms import ConstructionProjectForm
-
+from django.core.paginator import Paginator
 from .models import (
     ResidentialProperty, IndustrialProperty, LandProperty, GardenProperty
 )
@@ -143,11 +143,33 @@ def property_list(request):
     else:
         all_props.sort(key=lambda x: x.created_at, reverse=True)
 
+    # ===== مرتب‌سازی =====
+    if sort == 'price_asc':
+        all_props.sort(key=lambda x: float(x.price) if x.price else 0)
+    elif sort == 'price_desc':
+        all_props.sort(key=lambda x: float(x.price) if x.price else 0, reverse=True)
+    elif sort == 'area_asc':
+        all_props.sort(key=lambda x: x.area or 0)
+    elif sort == 'area_desc':
+        all_props.sort(key=lambda x: x.area or 0, reverse=True)
+    else:
+        all_props.sort(key=lambda x: x.created_at, reverse=True)
+
+    # ===== صفحه‌بندی =====
+    paginator = Paginator(all_props, 12)
+    page_number = request.GET.get('page', 1)
+    try:
+        page_obj = paginator.page(page_number)
+    except Exception:
+        page_obj = paginator.page(1)
+
     query_params = request.GET.copy()
     query_params.pop('page', None)
 
     return render(request, 'properties/property_list.html', {
-        'properties': all_props,
+        'properties': page_obj,
+        'page_obj': page_obj,
+        'paginator': paginator,
         'current_status': status,
         'current_type': property_type,
         'current_min_area': min_area,
