@@ -44,6 +44,81 @@
     <a href="{% url 'properties:property_list' %}?{% if current_status %}status={{ current_status }}&{% endif %}type=garden" class="filter-chip {% if current_type == 'garden' %}active{% endif %}">باغ</a>
 </div>
 
+<!-- فرم جستجو و فیلتر پیشرفته -->
+<div class="filter-panel">
+    <form method="get" action="{% url 'properties:property_list' %}">
+        <!-- حفظ فیلترهای فعلی -->
+        {% if current_status %}<input type="hidden" name="status" value="{{ current_status }}">{% endif %}
+        {% if current_type %}<input type="hidden" name="type" value="{{ current_type }}">{% endif %}
+
+        <div class="filter-grid">
+            <div class="filter-item">
+                <label>متراژ از (متر):</label>
+                <input type="number" name="min_area" class="form-control" value="{{ current_min_area }}" placeholder="مثلاً 50">
+            </div>
+            <div class="filter-item">
+                <label>متراژ تا (متر):</label>
+                <input type="number" name="max_area" class="form-control" value="{{ current_max_area }}" placeholder="مثلاً 200">
+            </div>
+            <div class="filter-item">
+                <label>قیمت از (تومان):</label>
+                <input type="number" name="min_price" class="form-control" value="{{ current_min_price }}" placeholder="مثلاً 1000000000">
+            </div>
+            <div class="filter-item">
+                <label>قیمت تا (تومان):</label>
+                <input type="number" name="max_price" class="form-control" value="{{ current_max_price }}" placeholder="مثلاً 5000000000">
+            </div>
+            <div class="filter-item">
+                <label>تعداد خواب:</label>
+                <select name="bedrooms" class="form-control">
+                    <option value="">همه</option>
+                    <option value="1" {% if current_bedrooms == '1' %}selected{% endif %}>۱</option>
+                    <option value="2" {% if current_bedrooms == '2' %}selected{% endif %}>۲</option>
+                    <option value="3" {% if current_bedrooms == '3' %}selected{% endif %}>۳</option>
+                    <option value="4" {% if current_bedrooms == '4' %}selected{% endif %}>۴ به بالا</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <label>فاز (لوکیشن):</label>
+                <select name="location_phase" class="form-control">
+                    <option value="">همه</option>
+                    {% for value, label in location_choices %}
+                        <option value="{{ value }}" {% if current_location_phase == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item">
+                <label>مرتب‌سازی:</label>
+                <select name="sort" class="form-control">
+                    <option value="-created_at" {% if current_sort == '-created_at' %}selected{% endif %}>جدیدترین</option>
+                    <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>ارزان‌ترین</option>
+                    <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>گران‌ترین</option>
+                    <option value="area_asc" {% if current_sort == 'area_asc' %}selected{% endif %}>کوچک‌ترین متراژ</option>
+                    <option value="area_desc" {% if current_sort == 'area_desc' %}selected{% endif %}>بزرگ‌ترین متراژ</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">🔍 اعمال فیلتر</button>
+            <a href="{% url 'properties:property_list' %}{% if current_status %}?status={{ current_status }}{% endif %}{% if current_type %}{% if current_status %}&{% else %}?{% endif %}type={{ current_type }}{% endif %}" class="btn btn-outline" style="color: #1e3a8a; border-color: #1e3a8a;">✕ حذف فیلترها</a>
+        </div>
+    </form>
+</div>
+
+<!-- نمایش فیلترهای فعال -->
+{% if current_min_area or current_max_area or current_min_price or current_max_price or current_bedrooms or current_location_phase %}
+    <div class="active-filters">
+        <span style="color: #6b7280; font-size: 0.85rem;">فیلترهای فعال:</span>
+        {% if current_min_area %}<span class="active-filter">متراژ از {{ current_min_area }}</span>{% endif %}
+        {% if current_max_area %}<span class="active-filter">متراژ تا {{ current_max_area }}</span>{% endif %}
+        {% if current_min_price %}<span class="active-filter">قیمت از {{ current_min_price }}</span>{% endif %}
+        {% if current_max_price %}<span class="active-filter">قیمت تا {{ current_max_price }}</span>{% endif %}
+        {% if current_bedrooms %}<span class="active-filter">{{ current_bedrooms }} خواب</span>{% endif %}
+        {% if current_location_phase %}<span class="active-filter">{{ current_location_phase }}</span>{% endif %}
+    </div>
+{% endif %}
+
 <!-- لیست آگهی‌ها -->
 {% if properties %}
     <div class="property-grid">

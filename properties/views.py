@@ -25,11 +25,33 @@ def home(request):
 
 
 def property_list(request):
-    """لیست آگهی‌ها با فیلتر status"""
+    """لیست آگهی‌ها با فیلتر پیشرفته"""
     status = request.GET.get('status', '')
     property_type = request.GET.get('type', '')
+    min_area = request.GET.get('min_area', '')
+    max_area = request.GET.get('max_area', '')
+    min_price = request.GET.get('min_price', '')
+    max_price = request.GET.get('max_price', '')
+    bedrooms = request.GET.get('bedrooms', '')
+    location_phase = request.GET.get('location_phase', '')
+    sort = request.GET.get('sort', '-created_at')
 
-    all_props = []
+    # تبدیل امن به عدد
+    def to_int(value):
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            return None
+
+    min_area_val = to_int(min_area)
+    max_area_val = to_int(max_area)
+    min_price_val = to_int(min_price)
+    max_price_val = to_int(max_price)
+    bedrooms_val = to_int(bedrooms)
+
+    # آیا فیلتر مخصوص residential فعال است؟
+    residential_only_filter = bool(bedrooms_val or location_phase)
+
     models_map = {
         'villa': ResidentialProperty,
         'apartment': ResidentialProperty,
@@ -40,28 +62,103 @@ def property_list(request):
         'garden': GardenProperty,
     }
 
-    # اگر نوع مشخص شده، فقط همان مدل را جستجو کن
+    # تعریف همه مدل‌ها با کلید
+    all_models = [
+        ('residential', ResidentialProperty),
+        ('industrial', IndustrialProperty),
+        ('land', LandProperty),
+        ('garden', GardenProperty),
+    ]
+
+    all_props = []
+
+    # اگر نوع مشخص شده
     if property_type and property_type in models_map:
         Model = models_map[property_type]
         qs = Model.objects.filter(is_active=True)
+
+        # فیلتر property_type (فقط برای residential)
         if property_type in ('villa', 'apartment', 'commercial', 'office'):
             qs = qs.filter(property_type=property_type)
+
+        # فیلترهای عمومی
         if status:
             qs = qs.filter(status=status)
+        if min_area_val is not None:
+            qs = qs.filter(area__gte=min_area_val)
+        if max_area_val is not None:
+            qs = qs.filter(area__lte=max_area_val)
+        if min_price_val is not None:
+            qs = qs.filter(price__gte=min_price_val)
+        if max_price_val is not None:
+            qs = qs.filter(price__lte=max_price_val)
+
+        # فیلترهای مخصوص residential
+        if property_type in ('villa', 'apartment', 'commercial', 'office'):
+            if bedrooms_val is not None:
+                qs = qs.filter(bedrooms__gte=bedrooms_val)
+            if location_phase:
+                qs = qs.filter(location_phase=location_phase)
+
         all_props = list(qs)
     else:
         # همه مدل‌ها
-        for Model in [ResidentialProperty, IndustrialProperty, LandProperty, GardenProperty]:
+        for key, Model in all_models:
+            # اگر فیلتر مخصوص residential فعال است، مدل‌های غیر residential را نادیده بگیر
+            if residential_only_filter and key != 'residential':
+                continue
+
             qs = Model.objects.filter(is_active=True)
+
+            # فیلترهای عمومی
             if status:
                 qs = qs.filter(status=status)
+            if min_area_val is not None:
+                qs = qs.filter(area__gte=min_area_val)
+            if max_area_val is not None:
+                qs = qs.filter(area__lte=max_area_val)
+            if min_price_val is not None:
+                qs = qs.filter(price__gte=min_price_val)
+            if max_price_val is not None:
+                qs = qs.filter(price__lte=max_price_val)
+
+            # فیلترهای مخصوص residential
+            if key == 'residential':
+                if bedrooms_val is not None:
+                    qs = qs.filter(bedrooms__gte=bedrooms_val)
+                if location_phase:
+                    qs = qs.filter(location_phase=location_phase)
+
             all_props += list(qs)
 
-    all_props.sort(key=lambda x: x.created_at, reverse=True)
+    # مرتب‌سازی
+    if sort == 'price_asc':
+        all_props.sort(key=lambda x: float(x.price) if x.price else 0)
+    elif sort == 'price_desc':
+        all_props.sort(key=lambda x: float(x.price) if x.price else 0, reverse=True)
+    elif sort == 'area_asc':
+        all_props.sort(key=lambda x: x.area or 0)
+    elif sort == 'area_desc':
+        all_props.sort(key=lambda x: x.area or 0, reverse=True)
+    else:
+        all_props.sort(key=lambda x: x.created_at, reverse=True)
+
+    query_params = request.GET.copy()
+    query_params.pop('page', None)
+
     return render(request, 'properties/property_list.html', {
         'properties': all_props,
         'current_status': status,
         'current_type': property_type,
+        'current_min_area': min_area,
+        'current_max_area': max_area,
+        'current_min_price': min_price,
+        'current_max_price': max_price,
+        'current_bedrooms': bedrooms,
+        'current_location_phase': location_phase,
+        'current_sort': sort,
+        'location_choices': ResidentialProperty.LOCATION_CHOICES,
+        'query_string': query_params.urlencode(),
     })
 
 
