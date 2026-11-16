@@ -18,3 +18,27 @@
 - بخش‌های: خرید/فروش، رهن/اجاره، تهاتر، کاسبی، باغ، ساخت و ساز
 - فرم وام بانکی
 - صفحات پشتیبان
+
+# دپارتمان املاک اندیشه - HomeProject
+
+## 📋 توضیح
+سامانه مدیریت املاک با سه پنل کاربری (سوپرادمین، مدیر سایت، آژانس).
+
+## 🚀 نصب و راه‌اندازی
+
+```bash
+# 1. فعال‌سازی محیط مجازی
+.venv\Scripts\activate
+
+# 2. نصب وابستگی‌ها
+pip install -r requirements.txt
+
+# 3. مایگریت
+python manage.py migrate
+
+# 4. ساخت سوپر یوزر
+python manage.py createsuperuser
+
+# 5. اجرای سرور
+python manage.py runserver
+
