@@ -4,7 +4,7 @@
 {% block content %}
 <h1>{% if is_edit %}ویرایش آگهی{% else %}ثبت آگهی جدید{% endif %}</h1>
 
-<form method="post" enctype="multipart/form-data" class="property-form">
+<form method="post" enctype="multipart/form-data" class="property-form" id="property-form">
     {% csrf_token %}
 
     {% if messages %}
@@ -13,115 +13,142 @@
         {% endfor %}
     {% endif %}
 
+    {% if form and form.non_field_errors %}
+        <div class="alert alert-error">
+            {% for error in form.non_field_errors %}{{ error }}<br>{% endfor %}
+        </div>
+    {% endif %}
+
     <!-- نوع آگهی -->
     <div class="form-row">
-        <label>نوع آگهی:</label>
-        <select name="status" class="form-control" required>
+        <label>نوع آگهی: <span class="required">*</span></label>
+        <select name="status" id="id_status" class="form-control" required>
             {% for value, label in status_choices %}
-                <option value="{{ value }}" {% if prop and prop.status == value %}selected{% endif %}>{{ label }}</option>
+                <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
         </select>
+        <small class="form-hint" id="status-hint"></small>
     </div>
 
-    <!-- نوع ملک (در حالت ویرایش غیرفعال است) -->
+    <!-- نوع ملک -->
     <div class="form-row">
-        <label>نوع ملک:</label>
-        <select name="property_type" id="id_property_type" class="form-control" {% if is_edit %}disabled{% endif %}>
+        <label>نوع ملک: <span class="required">*</span></label>
+        <select name="property_type" id="id_property_type" class="form-control" {% if is_edit %}disabled{% endif %} required>
             {% for value, label in property_types %}
                 <option value="{{ value }}"
-                    {% if prop and prop.property_type == value %}selected{% endif %}
-                    {% if not prop and not is_edit and value == 'villa' %}selected{% endif %}>
+                    {% if selected_type == value %}selected{% endif %}>
                     {{ label }}
                 </option>
             {% endfor %}
         </select>
         {% if is_edit %}
             <input type="hidden" name="property_type" value="{{ prop.property_type }}">
-            <small style="color:#6b7280;">نوع ملک قابل تغییر نیست</small>
+            <small class="form-hint">نوع ملک قابل تغییر نیست</small>
         {% endif %}
     </div>
 
-    <!-- فیلدهای مشترک -->
-    <div class="form-row">
-        <label>عنوان:</label>
-        <input type="text" name="title" class="form-control" required value="{{ prop.title|default:'' }}">
-    </div>
-    <div class="form-row">
-        <label>توضیحات:</label>
-        <textarea name="description" class="form-control" rows="4" required>{{ prop.description|default:'' }}</textarea>
-    </div>
-    <div class="form-row">
-        <label>قیمت (فروش):</label>
-        <input type="number" name="price" class="form-control" value="{{ prop.price|default:'' }}">
-    </div>
-    <div class="form-row">
-        <label>ودیعه:</label>
-        <input type="number" name="deposit" class="form-control" value="{{ prop.deposit|default:'' }}">
-    </div>
-    <div class="form-row">
-        <label>اجاره ماهیانه:</label>
-        <input type="number" name="rent" class="form-control" value="{{ prop.rent|default:'' }}">
-    </div>
-
-    <!-- متراژ (مشترک همه) -->
-    <div class="form-row">
-        <label>متراژ:</label>
-        <input type="number" name="area" class="form-control" required value="{{ prop.area|default:'' }}">
-    </div>
-
-    <!-- فیلدهای مسکونی -->
-    <div class="form-row residential-only">
-        <label>تعداد خواب:</label>
-        <input type="number" name="bedrooms" class="form-control" value="{{ prop.bedrooms|default:0 }}">
-    </div>
-    <div class="form-row residential-only">
-        <label>طبقه:</label>
-        <input type="number" name="floor" class="form-control" value="{{ prop.floor|default:0 }}">
-    </div>
-    <div class="form-row residential-only">
-        <label>تعداد کل طبقات:</label>
-        <input type="number" name="total_floors" class="form-control" value="{{ prop.total_floors|default:0 }}">
-    </div>
-    <div class="form-row residential-only">
-        <label>واحد در هر طبقه:</label>
-        <input type="number" name="units_per_floor" class="form-control" value="{{ prop.units_per_floor|default:0 }}">
-    </div>
-    <div class="form-row residential-only">
-        <label>سن بنا:</label>
-        <input type="number" name="building_age" class="form-control" value="{{ prop.building_age|default:0 }}">
-    </div>
-    <div class="form-row residential-only">
-        <label>لوکیشن (فاز):</label>
-        <select name="location_phase" class="form-control">
-            <option value="phase1" {% if prop.location_phase == 'phase1' %}selected{% endif %}>فاز یک</option>
-            <option value="phase2" {% if prop.location_phase == 'phase2' %}selected{% endif %}>فاز دو</option>
-            <option value="phase3" {% if prop.location_phase == 'phase3' %}selected{% endif %}>فاز سه</option>
-            <option value="phase4" {% if prop.location_phase == 'phase4' %}selected{% endif %}>فاز چهار</option>
-            <option value="phase5" {% if prop.location_phase == 'phase5' %}selected{% endif %}>فاز پنج</option>
-            <option value="phase6" {% if prop.location_phase == 'phase6' %}selected{% endif %}>فاز شش</option>
-            <option value="other" {% if prop.location_phase == 'other' %}selected{% endif %}>سایر</option>
-        </select>
-    </div>
-    <div class="form-row residential-only">
-        <label>لوکیشن (توضیح):</label>
-        <input type="text" name="location_text" class="form-control" value="{{ prop.location_text|default:'' }}">
-    </div>
-    <div class="form-row checkboxes residential-only">
-        <label><input type="checkbox" name="has_elevator" {% if prop.has_elevator %}checked{% endif %}> آسانسور</label>
-        <label><input type="checkbox" name="has_storage" {% if prop.has_storage %}checked{% endif %}> انباری</label>
-        <label><input type="checkbox" name="has_parking" {% if prop.has_parking %}checked{% endif %}> پارکینگ</label>
-        <label><input type="checkbox" name="has_balcony" {% if prop.has_balcony %}checked{% endif %}> بالکن/تراس</label>
-    </div>
-    <div class="form-row residential-only">
-        <label>امکانات:</label>
-        <textarea name="amenities" class="form-control" rows="2">{{ prop.amenities|default:'' }}</textarea>
-    </div>
-
-    <!-- فیلدهای صنعتی و زمین -->
-    <div class="form-row industrial-land-only">
-        <label>کاربری:</label>
-        <input type="text" name="usage" class="form-control" value="{{ prop.usage|default:'' }}">
-    </div>
+    <!-- فیلدهای فرم جنگو -->
+    {% if form %}
+        {% for field in form %}
+            {% if field.name in 'bedrooms,floor,total_floors,units_per_floor,building_age,location_phase,location_text,amenities,has_elevator,has_storage,has_parking,has_balcony' %}
+                <div class="form-row residential-only">
+            {% elif field.name == 'usage' %}
+                <div class="form-row industrial-land-only">
+            {% else %}
+                <div class="form-row">
+            {% endif %}
+                <label for="{{ field.id_for_label }}">
+                    {{ field.label }}
+                    {% if field.field.required %}<span class="required">*</span>{% endif %}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                    <small class="form-hint">{{ field.help_text }}</small>
+                {% endif %}
+                {% if field.errors %}
+                    <div class="field-error">
+                        {% for error in field.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <!-- حالت اولیه: فیلدهای دستی (برای نمایش اولیه) -->
+        <div class="form-row">
+            <label>عنوان: <span class="required">*</span></label>
+            <input type="text" name="title" class="form-control" required>
+        </div>
+        <div class="form-row">
+            <label>توضیحات: <span class="required">*</span></label>
+            <textarea name="description" class="form-control" rows="4" required></textarea>
+        </div>
+        <div class="form-row">
+            <label>قیمت (فروش):</label>
+            <input type="number" name="price" class="form-control" id="id_price">
+        </div>
+        <div class="form-row">
+            <label>ودیعه:</label>
+            <input type="number" name="deposit" class="form-control" id="id_deposit">
+        </div>
+        <div class="form-row">
+            <label>اجاره ماهیانه:</label>
+            <input type="number" name="rent" class="form-control" id="id_rent">
+        </div>
+        <div class="form-row">
+            <label>متراژ: <span class="required">*</span></label>
+            <input type="number" name="area" class="form-control" required>
+        </div>
+        <div class="form-row residential-only">
+            <label>تعداد خواب:</label>
+            <input type="number" name="bedrooms" class="form-control" value="0">
+        </div>
+        <div class="form-row residential-only">
+            <label>طبقه:</label>
+            <input type="number" name="floor" class="form-control" value="0">
+        </div>
+        <div class="form-row residential-only">
+            <label>تعداد کل طبقات:</label>
+            <input type="number" name="total_floors" class="form-control" value="0">
+        </div>
+        <div class="form-row residential-only">
+            <label>واحد در هر طبقه:</label>
+            <input type="number" name="units_per_floor" class="form-control" value="0">
+        </div>
+        <div class="form-row residential-only">
+            <label>سن بنا:</label>
+            <input type="number" name="building_age" class="form-control" value="0">
+        </div>
+        <div class="form-row residential-only">
+            <label>لوکیشن (فاز):</label>
+            <select name="location_phase" class="form-control">
+                <option value="phase1">فاز یک</option>
+                <option value="phase2">فاز دو</option>
+                <option value="phase3">فاز سه</option>
+                <option value="phase4">فاز چهار</option>
+                <option value="phase5">فاز پنج</option>
+                <option value="phase6">فاز شش</option>
+                <option value="other">سایر</option>
+            </select>
+        </div>
+        <div class="form-row residential-only">
+            <label>لوکیشن (توضیح):</label>
+            <input type="text" name="location_text" class="form-control">
+        </div>
+        <div class="form-row checkboxes residential-only">
+            <label><input type="checkbox" name="has_elevator"> آسانسور</label>
+            <label><input type="checkbox" name="has_storage"> انباری</label>
+            <label><input type="checkbox" name="has_parking"> پارکینگ</label>
+            <label><input type="checkbox" name="has_balcony"> بالکن/تراس</label>
+        </div>
+        <div class="form-row residential-only">
+            <label>امکانات:</label>
+            <textarea name="amenities" class="form-control" rows="2"></textarea>
+        </div>
+        <div class="form-row industrial-land-only">
+            <label>کاربری:</label>
+            <input type="text" name="usage" class="form-control">
+        </div>
+    {% endif %}
 
     <!-- چندرسانه‌ای -->
     <div class="form-row">
@@ -130,44 +157,57 @@
     </div>
     <div class="form-row">
         <label>فایل ویدیو:</label>
-        <input type="file" name="video_file" class="form-control">
+        <input type="file" name="video_file" class="form-control" accept="video/*">
     </div>
 
-    <!-- عکس‌های موجود (فقط در ویرایش) -->
+    <!-- عکس‌های موجود (ویرایش) -->
     {% if is_edit and existing_images %}
         <div class="form-row">
-            <label>عکس‌های فعلی (برای حذف کلیک کنید):</label>
+            <label>عکس‌های فعلی:</label>
             <div class="existing-images">
                 {% for img in existing_images %}
                     <div class="existing-image-item">
                         <img src="{{ img.image.url }}" alt="">
-                        <a href="{% url 'properties:property_image_delete' img.id %}" class="btn-delete-image" onclick="return confirm('این عکس حذف شود؟')">✕</a>
+                        <a href="{% url 'properties:property_image_delete' img.id %}" class="btn-delete-image" onclick="return confirm('حذف شود؟')">✕</a>
                     </div>
                 {% endfor %}
             </div>
         </div>
     {% endif %}
 
-    <!-- آپلود عکس جدید -->
+    <!-- آپلود عکس با پیش‌نمایش -->
     <div class="form-row">
         <label>{% if is_edit %}افزودن عکس‌های جدید:{% else %}عکس‌های آگهی (چندتایی):{% endif %}</label>
-        <input type="file" name="images" class="form-control" multiple accept="image/*">
+        <input type="file" name="images" id="id_images" class="form-control" multiple accept="image/*">
+        <small class="form-hint">حداکثر ۱۰ عکس، هر عکس حداکثر ۵ مگابایت</small>
+        <div id="image-preview" class="image-preview-grid"></div>
     </div>
 
-    <button type="submit" class="btn btn-primary">
-        {% if is_edit %}💾 ذخیره تغییرات{% else %}ثبت آگهی{% endif %}
-    </button>
-    <a href="{% if is_edit %}{% url 'properties:property_detail' prop.pk property_type %}{% else %}{% url 'properties:property_list' %}{% endif %}" class="btn btn-outline">انصراف</a>
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">
+            {% if is_edit %}💾 ذخیره تغییرات{% else %}ثبت آگهی{% endif %}
+        </button>
+        <a href="{% if is_edit %}{% url 'properties:property_detail' prop.pk property_type %}{% else %}{% url 'properties:property_list' %}{% endif %}" class="btn btn-outline" style="color:#1e3a8a; border-color:#1e3a8a;">انصراف</a>
+    </div>
 </form>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const typeSelect = document.getElementById('id_property_type');
-    if (!typeSelect) return;
+    const statusSelect = document.getElementById('id_status');
+    const statusHint = document.getElementById('status-hint');
+    const form = document.getElementById('property-form');
+    const priceInput = document.getElementById('id_price');
+    const depositInput = document.getElementById('id_deposit');
+    const rentInput = document.getElementById('id_rent');
+    const imagesInput = document.getElementById('id_images');
+    const previewGrid = document.getElementById('image-preview');
 
     const residentialTypes = ['villa', 'apartment', 'commercial', 'office'];
 
+    // ===== نمایش/مخفی کردن فیلدها بر اساس نوع ملک =====
     function toggleFields() {
+        if (!typeSelect) return;
         const type = typeSelect.value;
         const isResidential = residentialTypes.includes(type);
         const isIndustrialOrLand = (type === 'industrial' || type === 'land');
@@ -175,14 +215,102 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.residential-only').forEach(el => {
             el.style.display = isResidential ? '' : 'none';
         });
-
         document.querySelectorAll('.industrial-land-only').forEach(el => {
             el.style.display = isIndustrialOrLand ? '' : 'none';
         });
     }
+    if (typeSelect) {
+        typeSelect.addEventListener('change', toggleFields);
+        toggleFields();
+    }
 
-    typeSelect.addEventListener('change', toggleFields);
-    toggleFields();
+    // ===== راهنمای وضعیت =====
+    function updateStatusHint() {
+        if (!statusSelect || !statusHint) return;
+        const status = statusSelect.value;
+        if (status === 'sale') {
+            statusHint.textContent = 'برای فروش، فیلد «قیمت» الزامی است.';
+        } else if (status === 'rent') {
+            statusHint.textContent = 'برای رهن/اجاره، حداقل «ودیعه» یا «اجاره ماهیانه» را پر کنید.';
+        } else {
+            statusHint.textContent = '';
+        }
+    }
+    if (statusSelect) {
+        statusSelect.addEventListener('change', updateStatusHint);
+        updateStatusHint();
+    }
+
+    // ===== اعتبارسنجی قبل از ارسال =====
+    form.addEventListener('submit', function(e) {
+        const status = statusSelect ? statusSelect.value : '';
+        const price = priceInput ? priceInput.value.trim() : '';
+        const deposit = depositInput ? depositInput.value.trim() : '';
+        const rent = rentInput ? rentInput.value.trim() : '';
+
+        if (status === 'sale' && !price) {
+            e.preventDefault();
+            alert('برای آگهی فروش، وارد کردن «قیمت» الزامی است.');
+            priceInput.focus();
+            return;
+        }
+
+        if (status === 'rent' && !deposit && !rent) {
+            e.preventDefault();
+            alert('برای آگهی رهن/اجاره، حداقل یکی از «ودیعه» یا «اجاره ماهیانه» را وارد کنید.');
+            return;
+        }
+
+        // حجم فایل‌ها
+        if (imagesInput && imagesInput.files.length > 10) {
+            e.preventDefault();
+            alert('حداکثر ۱۰ عکس می‌توانید آپلود کنید.');
+            return;
+        }
+
+        if (imagesInput) {
+            for (let i = 0; i < imagesInput.files.length; i++) {
+                if (imagesInput.files[i].size > 5 * 1024 * 1024) {
+                    e.preventDefault();
+                    alert('هر عکس حداکثر ۵ مگابایت می‌تواند باشد.');
+                    return;
+                }
+            }
+        }
+    });
+
+    // ===== پیش‌نمایش عکس‌ها =====
+    if (imagesInput && previewGrid) {
+        imagesInput.addEventListener('change', function() {
+            previewGrid.innerHTML = '';
+            const files = Array.from(this.files);
+
+            if (files.length > 10) {
+                alert('حداکثر ۱۰ عکس مجاز است.');
+                this.value = '';
+                return;
+            }
+
+            files.forEach((file, idx) => {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert(`عکس ${file.name} بیشتر از ۵ مگابایت است.`);
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const item = document.createElement('div');
+                    item.className = 'preview-item';
+                    item.innerHTML = `
+                        <img src="${e.target.result}" alt="preview">
+                        <span class="preview-index">${idx + 1}</span>
+                    `;
+                    previewGrid.appendChild(item);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+    }
 });
 </script>
 {% endblock %}

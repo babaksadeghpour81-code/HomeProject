@@ -222,6 +222,81 @@ body {
     cursor: pointer;
 }
 
+/* ========================================
+   Form Improvements
+   ======================================== */
+.required {
+    color: #dc2626;
+    font-weight: bold;
+}
+
+.form-hint {
+    display: block;
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+.field-error {
+    display: block;
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    margin-top: 5px;
+    border-right: 3px solid #dc2626;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* ========================================
+   Image Preview
+   ======================================== */
+.image-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.preview-item {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f3f4f6;
+    aspect-ratio: 1 / 1;
+}
+
+.preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.preview-index {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(30, 58, 138, 0.9);
+    color: white;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
 /* Dashboard */
 .license-card {
     background: white;

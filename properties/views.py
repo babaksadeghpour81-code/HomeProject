@@ -232,9 +232,15 @@ def property_create(request):
         messages.error(request, 'برای ثبت آگهی باید لایسنس فعال داشته باشید.')
         return redirect('properties:home')
 
+    form = None
+    selected_type = 'villa'
+    selected_status = 'sale'
+
     if request.method == 'POST':
         property_type = request.POST.get('property_type')
         status = request.POST.get('status')
+        selected_type = property_type or 'villa'
+        selected_status = status or 'sale'
 
         form_class = None
         if property_type in ('villa', 'apartment', 'commercial', 'office'):
@@ -245,36 +251,31 @@ def property_create(request):
             form_class = LandPropertyForm
         elif property_type == 'garden':
             form_class = GardenPropertyForm
-        else:
-            messages.error(request, 'نوع ملک نامعتبر است.')
-            return redirect('properties:property_create')
 
-        form = form_class(request.POST, request.FILES)
-        if form.is_valid():
-            prop = form.save(commit=False)
-            prop.owner = request.user
-            prop.property_type = property_type
-            prop.status = status
-            prop.save()
+        if form_class:
+            form = form_class(request.POST, request.FILES)
+            if form.is_valid():
+                prop = form.save(commit=False)
+                prop.owner = request.user
+                prop.property_type = property_type
+                prop.status = status
+                prop.save()
 
-            # آپلود عکس‌ها
-            from .models import PropertyImage
-            from django.contrib.contenttypes.models import ContentType
-            images = request.FILES.getlist('images')
-            if images:
-                ct = ContentType.objects.get_for_model(prop)
-                for idx, img in enumerate(images):
-                    PropertyImage.objects.create(
-                        content_type=ct,
-                        object_id=prop.id,
-                        image=img,
-                        order=idx,
-                    )
+                from .models import PropertyImage
+                from django.contrib.contenttypes.models import ContentType
+                images = request.FILES.getlist('images')
+                if images:
+                    ct = ContentType.objects.get_for_model(prop)
+                    for idx, img in enumerate(images):
+                        PropertyImage.objects.create(
+                            content_type=ct,
+                            object_id=prop.id,
+                            image=img,
+                            order=idx,
+                        )
 
-            messages.success(request, 'آگهی با موفقیت ثبت شد.')
-            return redirect('properties:property_list')
-        else:
-            messages.error(request, f'خطا در فرم: {form.errors}')
+                messages.success(request, 'آگهی با موفقیت ثبت شد.')
+                return redirect('properties:property_list')
 
     return render(request, 'properties/property_form.html', {
         'property_types': [
@@ -283,6 +284,9 @@ def property_create(request):
             ('industrial', 'صنعتی'), ('land', 'زمین'), ('garden', 'باغ'),
         ],
         'status_choices': ResidentialProperty.STATUS_CHOICES,
+        'form': form,
+        'selected_type': selected_type,
+        'selected_status': selected_status,
     })
 
 @login_required
@@ -335,7 +339,6 @@ def _get_property_form(property_type):
 
 @login_required
 def property_update(request, pk, property_type):
-    """ویرایش آگهی - فقط صاحب آگهی یا مدیر"""
     Model = _get_property_model(property_type)
     FormClass = _get_property_form(property_type)
     if not Model or not FormClass:
@@ -344,16 +347,16 @@ def property_update(request, pk, property_type):
 
     prop = get_object_or_404(Model, pk=pk)
 
-    # چک دسترسی: صاحب آگهی یا admin/superadmin
     if prop.owner != request.user and request.user.role not in ('admin', 'superadmin'):
         return HttpResponseForbidden('شما اجازه ویرایش این آگهی را ندارید.')
+
+    form = None
 
     if request.method == 'POST':
         form = FormClass(request.POST, request.FILES, instance=prop)
         if form.is_valid():
             form.save()
 
-            # آپلود عکس‌های جدید (در صورت وجود)
             from .models import PropertyImage
             from django.contrib.contenttypes.models import ContentType
             images = request.FILES.getlist('images')
@@ -369,12 +372,9 @@ def property_update(request, pk, property_type):
 
             messages.success(request, 'آگهی با موفقیت ویرایش شد.')
             return redirect('properties:property_detail', pk=prop.pk, property_type=property_type)
-        else:
-            messages.error(request, f'خطا در فرم: {form.errors}')
     else:
         form = FormClass(instance=prop)
 
-    # عکس‌های موجود
     from .models import PropertyImage
     from django.contrib.contenttypes.models import ContentType
     ct = ContentType.objects.get_for_model(prop)
@@ -386,6 +386,8 @@ def property_update(request, pk, property_type):
         'existing_images': existing_images,
         'is_edit': True,
         'property_type': property_type,
+        'selected_type': prop.property_type,
+        'selected_status': prop.status,
         'property_types': [
             ('villa', 'ویلایی'), ('apartment', 'آپارتمان'),
             ('commercial', 'تجاری'), ('office', 'اداری'),
