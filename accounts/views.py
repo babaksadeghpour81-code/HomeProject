@@ -82,8 +82,10 @@ def admin_panel(request):
         return HttpResponseForbidden('دسترسی غیرمجاز')
 
     from properties.models import (
-        ResidentialProperty, IndustrialProperty, LandProperty, GardenProperty
+        ResidentialProperty, IndustrialProperty, LandProperty, GardenProperty, ConstructionProject
     )
+    from support.models import LoanRequest
+
     all_props = []
     for Model in [ResidentialProperty, IndustrialProperty, LandProperty, GardenProperty]:
         all_props += list(Model.objects.all())
@@ -95,9 +97,10 @@ def admin_panel(request):
         'total_agencies': User.objects.filter(role='agency').count(),
         'pending_licenses': License.objects.filter(status='pending').count(),
         'active_licenses': License.objects.filter(status='active', is_active=True).count(),
+        'total_constructions': ConstructionProject.objects.count(),
+        'pending_loans': LoanRequest.objects.filter(status='pending').count(),
     }
 
-    # آخرین آگهی‌ها
     recent = sorted(all_props, key=lambda x: x.created_at, reverse=True)[:10]
 
     return render(request, 'accounts/admin_panel.html', {
@@ -323,4 +326,160 @@ def profile_edit(request):
         form = AgencyProfileForm(instance=request.user)
 
     return render(request, 'accounts/profile_edit.html', {'form': form})
+
+# ============================================================
+# مدیریت پروژه‌های ساخت و ساز (پنل مدیر سایت)
+# ============================================================
+
+@login_required
+def admin_constructions(request):
+    """مدیریت پروژه‌های ساخت و ساز"""
+    if request.user.role not in ('admin', 'superadmin'):
+        return HttpResponseForbidden('دسترسی غیرمجاز')
+
+    from properties.models import ConstructionProject
+    from django.core.paginator import Paginator
+
+    projects = ConstructionProject.objects.all().order_by('-created_at')
+
+    # فیلتر بر اساس وضعیت
+    status_filter = request.GET.get('status', '')
+    if status_filter == 'active':
+        projects = projects.filter(is_active=True)
+    elif status_filter == 'inactive':
+        projects = projects.filter(is_active=False)
+
+    # فیلتر بر اساس نوع پروژه
+    type_filter = request.GET.get('type', '')
+    if type_filter in ('presale', 'partnership'):
+        projects = projects.filter(project_type=type_filter)
+
+    # صفحه‌بندی
+    paginator = Paginator(projects, 15)
+    page_number = request.GET.get('page', 1)
+    try:
+        page_obj = paginator.page(page_number)
+    except Exception:
+        page_obj = paginator.page(1)
+
+    query_params = request.GET.copy()
+    query_params.pop('page', None)
+
+    return render(request, 'accounts/admin_constructions.html', {
+        'page_obj': page_obj,
+        'paginator': paginator,
+        'current_status': status_filter,
+        'current_type': type_filter,
+        'query_string': query_params.urlencode(),
+    })
+
+
+@login_required
+def admin_construction_action(request, pk, action):
+    """فعال/غیرفعال/حذف پروژه ساخت و ساز"""
+    if request.user.role not in ('admin', 'superadmin'):
+        return HttpResponseForbidden('دسترسی غیرمجاز')
+
+    from properties.models import ConstructionProject
+
+    project = get_object_or_404(ConstructionProject, pk=pk)
+
+    if action == 'activate':
+        project.is_active = True
+        project.save()
+        messages.success(request, f'پروژه «{project.title}» فعال شد.')
+    elif action == 'deactivate':
+        project.is_active = False
+        project.save()
+        messages.warning(request, f'پروژه «{project.title}» غیرفعال شد.')
+    elif action == 'delete':
+        project.delete()
+        messages.info(request, 'پروژه حذف شد.')
+
+    return redirect('accounts:admin_constructions')
+
+
+# ============================================================
+# مدیریت درخواست‌های وام بانکی (پنل مدیر سایت)
+# ============================================================
+
+@login_required
+def admin_loans(request):
+    """مدیریت درخواست‌های وام"""
+    if request.user.role not in ('admin', 'superadmin'):
+        return HttpResponseForbidden('دسترسی غیرمجاز')
+
+    from support.models import LoanRequest
+    from django.core.paginator import Paginator
+
+    loans = LoanRequest.objects.all().order_by('-created_at')
+
+    # فیلتر بر اساس وضعیت
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        loans = loans.filter(status=status_filter)
+
+    # فیلتر بر اساس نوع وام
+    type_filter = request.GET.get('type', '')
+    if type_filter:
+        loans = loans.filter(loan_type=type_filter)
+
+    # صفحه‌بندی
+    paginator = Paginator(loans, 15)
+    page_number = request.GET.get('page', 1)
+    try:
+        page_obj = paginator.page(page_number)
+    except Exception:
+        page_obj = paginator.page(1)
+
+    query_params = request.GET.copy()
+    query_params.pop('page', None)
+
+    return render(request, 'accounts/admin_loans.html', {
+        'page_obj': page_obj,
+        'paginator': paginator,
+        'current_status': status_filter,
+        'current_type': type_filter,
+        'status_choices': LoanRequest.STATUS_CHOICES,
+        'loan_type_choices': LoanRequest.LOAN_TYPE_CHOICES,
+        'query_string': query_params.urlencode(),
+    })
+
+
+@login_required
+def admin_loan_detail(request, loan_id):
+    """جزئیات درخواست وام"""
+    if request.user.role not in ('admin', 'superadmin'):
+        return HttpResponseForbidden('دسترسی غیرمجاز')
+
+    from support.models import LoanRequest
+
+    loan = get_object_or_404(LoanRequest, id=loan_id)
+
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        if new_status in dict(LoanRequest.STATUS_CHOICES):
+            loan.status = new_status
+            loan.save()
+            messages.success(request, 'وضعیت درخواست وام به‌روزرسانی شد.')
+            return redirect('accounts:admin_loans')
+
+    return render(request, 'accounts/admin_loan_detail.html', {
+        'loan': loan,
+        'status_choices': LoanRequest.STATUS_CHOICES,
+    })
+
+
+@login_required
+def admin_loan_delete(request, loan_id):
+    """حذف درخواست وام"""
+    if request.user.role not in ('admin', 'superadmin'):
+        return HttpResponseForbidden('دسترسی غیرمجاز')
+
+    from support.models import LoanRequest
+
+    loan = get_object_or_404(LoanRequest, id=loan_id)
+    loan.delete()
+    messages.info(request, 'درخواست وام حذف شد.')
+    return redirect('accounts:admin_loans')
 

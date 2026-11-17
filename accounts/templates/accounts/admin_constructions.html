@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}مدیریت پروژه‌های ساخت و ساز{% endblock %}
+
+{% block content %}
+<div class="admin-panel-header">
+    <h1>مدیریت پروژه‌های ساخت و ساز</h1>
+    <p>تعداد کل: {{ paginator.count }}</p>
+</div>
+
+<div class="admin-nav">
+    <a href="{% url 'accounts:admin_constructions' %}" class="{% if not current_status and not current_type %}active{% endif %}">همه</a>
+    <a href="{% url 'accounts:admin_constructions' %}?status=active" class="{% if current_status == 'active' %}active{% endif %}">فعال</a>
+    <a href="{% url 'accounts:admin_constructions' %}?status=inactive" class="{% if current_status == 'inactive' %}active{% endif %}">غیرفعال</a>
+    <a href="{% url 'accounts:admin_constructions' %}?type=presale" class="{% if current_type == 'presale' %}active{% endif %}">پیش‌فروش</a>
+    <a href="{% url 'accounts:admin_constructions' %}?type=partnership" class="{% if current_type == 'partnership' %}active{% endif %}">مشارکت</a>
+    <a href="{% url 'accounts:admin_panel' %}">← بازگشت به پنل</a>
+</div>
+
+{% if page_obj.object_list %}
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>عنوان</th>
+                <th>نوع</th>
+                <th>آگهی‌دهنده</th>
+                <th>متراژ</th>
+                <th>تاریخ</th>
+                <th>وضعیت</th>
+                <th>عملیات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for project in page_obj %}
+                <tr>
+                    <td>{{ project.title }}</td>
+                    <td>{{ project.get_project_type_display }}</td>
+                    <td>{{ project.owner.agency_name|default:project.owner.username }}</td>
+                    <td>{{ project.area }} متر</td>
+                    <td>{{ project.created_at|date:"Y/m/d" }}</td>
+                    <td>
+                        {% if project.is_active %}
+                            <span class="badge badge-success">فعال</span>
+                        {% else %}
+                            <span class="badge badge-danger">غیرفعال</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if project.is_active %}
+                            <a href="{% url 'accounts:admin_construction_action' project.pk 'deactivate' %}" class="btn btn-sm btn-danger">غیرفعال</a>
+                        {% else %}
+                            <a href="{% url 'accounts:admin_construction_action' project.pk 'activate' %}" class="btn btn-sm btn-primary">فعال</a>
+                        {% endif %}
+                        <a href="{% url 'accounts:admin_construction_action' project.pk 'delete' %}" class="btn btn-sm btn-danger" onclick="return confirm('حذف شود؟')">🗑</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if page_obj.has_other_pages %}
+    <nav class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.previous_page_number }}" class="page-link">← قبلی</a>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <span class="page-link active">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ num }}" class="page-link">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+            <a href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.next_page_number }}" class="page-link">بعدی →</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+{% else %}
+    <div class="empty-state">
+        <span class="empty-icon">🏗️</span>
+        <h2>پروژه‌ای یافت نشد</h2>
+    </div>
+{% endif %}
+{% endblock %}

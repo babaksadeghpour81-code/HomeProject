@@ -21,4 +21,13 @@ urlpatterns = [
     path('admin-panel/properties/<str:property_type>/<int:pk>/<str:action>/', views.admin_property_action, name='admin_property_action'),
     path('admin-panel/licenses/<int:license_id>/renew/', views.admin_license_renew, name='admin_license_renew'),
     path('profile/edit/', views.profile_edit, name='profile_edit'),
+    # مدیریت ساخت و ساز
+    path('admin-panel/constructions/', views.admin_constructions, name='admin_constructions'),
+    path('admin-panel/constructions/<int:pk>/<str:action>/', views.admin_construction_action,
+         name='admin_construction_action'),
+
+    # مدیریت وام بانکی
+    path('admin-panel/loans/', views.admin_loans, name='admin_loans'),
+    path('admin-panel/loans/<int:loan_id>/', views.admin_loan_detail, name='admin_loan_detail'),
+    path('admin-panel/loans/<int:loan_id>/delete/', views.admin_loan_delete, name='admin_loan_delete'),
 ]

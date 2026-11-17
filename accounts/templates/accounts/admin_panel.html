@@ -32,13 +32,23 @@
         <span class="stat-value" style="color: #059669;">{{ stats.active_licenses }}</span>
         <span class="stat-label">لایسنس فعال</span>
     </div>
+    <div class="stat-card">
+        <span class="stat-value">{{ stats.total_constructions }}</span>
+        <span class="stat-label">پروژه‌های ساخت</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">{{ stats.pending_loans }}</span>
+        <span class="stat-label">وام در انتظار</span>
+    </div>
 </div>
 
 <div class="admin-nav">
-    <a href="{% url 'accounts:admin_licenses' %}">📋 مدیریت لایسنس‌ها</a>
-    <a href="{% url 'accounts:admin_agencies' %}">🏢 مدیریت آژانس‌ها</a>
     <a href="{% url 'accounts:admin_properties' %}">📋 مدیریت آگهی‌ها</a>
     <a href="/admin/properties/">📝 مدیریت آگهی‌ها (ادمین)</a>
+    <a href="{% url 'accounts:admin_constructions' %}">🏗️ پروژه‌های ساخت</a>
+    <a href="{% url 'accounts:admin_loans' %}">🏦 درخواست‌های وام</a>
+    <a href="{% url 'accounts:admin_licenses' %}">📄 لایسنس‌ها</a>
+    <a href="{% url 'accounts:admin_agencies' %}">🏢 آژانس‌ها</a>
 </div>
 
 <h2>آخرین آگهی‌ها</h2>

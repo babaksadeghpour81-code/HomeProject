@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}جزئیات درخواست وام{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{% url 'accounts:admin_panel' %}">پنل مدیریت</a>
+    <span>›</span>
+    <a href="{% url 'accounts:admin_loans' %}">درخواست‌های وام</a>
+    <span>›</span>
+    <span>{{ loan.full_name }}</span>
+</div>
+
+<h1>درخواست وام {{ loan.full_name }}</h1>
+
+<div class="license-card">
+    <h2>📋 اطلاعات متقاضی</h2>
+    <p><strong>نام و نام خانوادگی:</strong> {{ loan.full_name }}</p>
+    <p><strong>کد ملی:</strong> {{ loan.national_code }}</p>
+    <p><strong>شماره تماس:</strong> <a href="tel:{{ loan.phone }}">{{ loan.phone }}</a></p>
+    {% if loan.user %}
+        <p><strong>کاربر ثبت‌نام‌شده:</strong> {{ loan.user.username }}</p>
+    {% endif %}
+</div>
+
+<div class="license-card">
+    <h2>💰 اطلاعات وام</h2>
+    <p><strong>نوع وام:</strong> {{ loan.get_loan_type_display }}</p>
+    <p><strong>مبلغ درخواستی:</strong> {{ loan.amount|floatformat:"0" }} تومان</p>
+    {% if loan.description %}
+        <p><strong>توضیحات:</strong> {{ loan.description }}</p>
+    {% endif %}
+    <p><strong>تاریخ ثبت:</strong> {{ loan.created_at|date:"Y/m/d H:i" }}</p>
+    <p><strong>وضعیت فعلی:</strong>
+        {% if loan.status == 'pending' %}<span class="badge badge-warning">در انتظار</span>
+        {% elif loan.status == 'reviewing' %}<span class="badge badge-info">در بررسی</span>
+        {% elif loan.status == 'approved' %}<span class="badge badge-success">تایید</span>
+        {% else %}<span class="badge badge-danger">رد شده</span>{% endif %}
+    </p>
+</div>
+
+<div class="license-card">
+    <h2>⚙️ تغییر وضعیت</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-row">
+            <label>وضعیت جدید:</label>
+            <select name="status" class="form-control">
+                {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if loan.status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">💾 ذخیره</button>
+        <a href="{% url 'accounts:admin_loans' %}" class="btn btn-outline" style="color:#1e3a8a; border-color:#1e3a8a;">بازگشت</a>
+    </form>
+</div>
+{% endblock %}

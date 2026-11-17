@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}مدیریت درخواست‌های وام{% endblock %}
+
+{% block content %}
+<div class="admin-panel-header">
+    <h1>مدیریت درخواست‌های وام بانکی</h1>
+    <p>تعداد کل: {{ paginator.count }}</p>
+</div>
+
+<div class="admin-nav">
+    <a href="{% url 'accounts:admin_loans' %}" class="{% if not current_status and not current_type %}active{% endif %}">همه</a>
+    <a href="{% url 'accounts:admin_loans' %}?status=pending" class="{% if current_status == 'pending' %}active{% endif %}">در انتظار</a>
+    <a href="{% url 'accounts:admin_loans' %}?status=reviewing" class="{% if current_status == 'reviewing' %}active{% endif %}">در بررسی</a>
+    <a href="{% url 'accounts:admin_loans' %}?status=approved" class="{% if current_status == 'approved' %}active{% endif %}">تایید شده</a>
+    <a href="{% url 'accounts:admin_loans' %}?status=rejected" class="{% if current_status == 'rejected' %}active{% endif %}">رد شده</a>
+    <a href="{% url 'accounts:admin_panel' %}">← بازگشت به پنل</a>
+</div>
+
+{% if page_obj.object_list %}
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>نام</th>
+                <th>کد ملی</th>
+                <th>تلفن</th>
+                <th>نوع وام</th>
+                <th>مبلغ</th>
+                <th>تاریخ</th>
+                <th>وضعیت</th>
+                <th>عملیات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for loan in page_obj %}
+                <tr>
+                    <td>{{ loan.full_name }}</td>
+                    <td>{{ loan.national_code }}</td>
+                    <td>{{ loan.phone }}</td>
+                    <td>{{ loan.get_loan_type_display }}</td>
+                    <td>{{ loan.amount|floatformat:"0" }} تومان</td>
+                    <td>{{ loan.created_at|date:"Y/m/d" }}</td>
+                    <td>
+                        {% if loan.status == 'pending' %}
+                            <span class="badge badge-warning">در انتظار</span>
+                        {% elif loan.status == 'reviewing' %}
+                            <span class="badge badge-info">در بررسی</span>
+                        {% elif loan.status == 'approved' %}
+                            <span class="badge badge-success">تایید</span>
+                        {% else %}
+                            <span class="badge badge-danger">رد شده</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'accounts:admin_loan_detail' loan.id %}" class="btn btn-sm btn-primary">مشاهده</a>
+                        <a href="{% url 'accounts:admin_loan_delete' loan.id %}" class="btn btn-sm btn-danger" onclick="return confirm('حذف شود؟')">🗑</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if page_obj.has_other_pages %}
+    <nav class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.previous_page_number }}" class="page-link">← قبلی</a>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <span class="page-link active">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ num }}" class="page-link">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+            <a href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.next_page_number }}" class="page-link">بعدی →</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+{% else %}
+    <div class="empty-state">
+        <span class="empty-icon">🏦</span>
+        <h2>درخواست وامی یافت نشد</h2>
+    </div>
+{% endif %}
+{% endblock %}
