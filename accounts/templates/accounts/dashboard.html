@@ -3,7 +3,17 @@
 
 {% block content %}
 <h1>داشبورد آژانس</h1>
-<a href="{% url 'accounts:profile_edit' %}" class="btn btn-outline" style="color: #1e3a8a; border-color: #1e3a8a;">✏️ ویرایش پروفایل</a>
+
+<!-- ✅ دکمه‌های ویرایش پروفایل و تغییر رمز -->
+<div style="display: flex; gap: 10px; flex-wrap: wrap; margin: 15px 0;">
+    <a href="{% url 'accounts:profile_edit' %}" class="btn btn-outline" style="color: #1e3a8a; border-color: #1e3a8a;">
+        ✏️ ویرایش پروفایل
+    </a>
+    <a href="{% url 'accounts:password_change' %}" class="btn btn-outline" style="color: #1e3a8a; border-color: #1e3a8a;">
+        🔒 تغییر رمز عبور
+    </a>
+</div>
+
 <p>خوش آمدید، <strong>{{ user.agency_name|default:user.username }}</strong></p>
 
 {% if license_warning %}

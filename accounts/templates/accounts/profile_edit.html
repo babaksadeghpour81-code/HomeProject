@@ -13,24 +13,44 @@
         {% endfor %}
     {% endif %}
 
+    <!-- کد ملی (غیرقابل تغییر) -->
+    <div class="form-row">
+        <label>کد ملی (نام کاربری):</label>
+        <input type="text" class="form-control" value="{{ form.instance.username }}" disabled>
+        <small class="form-hint">کد ملی قابل تغییر نیست</small>
+    </div>
+
+    <!-- لوگوی فعلی -->
     {% if form.instance.agency_logo %}
         <div class="form-row">
             <label>لوگوی فعلی:</label>
-            <img src="{{ form.instance.agency_logo.url }}" alt="logo" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <img src="{{ form.instance.agency_logo.url }}" alt="logo" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid #e5e7eb;">
+                <small style="color: #6b7280;">برای تغییر، فایل جدید آپلود کنید</small>
+            </div>
         </div>
     {% endif %}
 
+    <!-- فیلدهای فرم -->
     {% for field in form %}
         <div class="form-row">
-            <label>{{ field.label }}:</label>
+            <label for="{{ field.id_for_label }}">
+                {{ field.label }}
+                {% if field.field.required %}<span class="required">*</span>{% endif %}
+            </label>
             {{ field }}
+            {% if field.help_text %}
+                <small class="form-hint">{{ field.help_text }}</small>
+            {% endif %}
             {% if field.errors %}
-                <div class="alert alert-error">{{ field.errors }}</div>
+                <div class="field-error">{{ field.errors|join:", " }}</div>
             {% endif %}
         </div>
     {% endfor %}
 
-    <button type="submit" class="btn btn-primary">💾 ذخیره تغییرات</button>
-    <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline" style="color:#1e3a8a; border-color:#1e3a8a;">انصراف</a>
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">💾 ذخیره تغییرات</button>
+        <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline" style="color:#1e3a8a; border-color:#1e3a8a;">انصراف</a>
+    </div>
 </form>
 {% endblock %}

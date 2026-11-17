@@ -1,6 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
+from django.urls import path, reverse_lazy
 
 app_name = 'accounts'
 
@@ -30,4 +31,8 @@ urlpatterns = [
     path('admin-panel/loans/', views.admin_loans, name='admin_loans'),
     path('admin-panel/loans/<int:loan_id>/', views.admin_loan_detail, name='admin_loan_detail'),
     path('admin-panel/loans/<int:loan_id>/delete/', views.admin_loan_delete, name='admin_loan_delete'),
+    # ===== تغییر و بازنشانی رمز عبور =====
+    path('password-change/', views.password_change, name='password_change'),
+    path('password-reset/', views.password_reset_request, name='password_reset'),
+    path('password-reset/verify/', views.password_reset_verify, name='password_reset_verify'),
 ]

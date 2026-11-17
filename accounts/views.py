@@ -4,9 +4,11 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 from django.utils import timezone
-
+from django.conf import settings
+from datetime import timedelta
+import random
 from .forms import RegisterForm
-from .models import User, License
+from .models import User, License, PasswordResetOTP
 
 
 def register(request):
@@ -485,3 +487,169 @@ def admin_loan_delete(request, loan_id):
     messages.info(request, 'درخواست وام حذف شد.')
     return redirect('accounts:admin_loans')
 
+def _get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        return x_forwarded_for.split(',')[0]
+    return request.META.get('REMOTE_ADDR')
+
+
+def _send_otp_sms(phone, otp_code):
+    """ارسال کد OTP با sms_ir"""
+    try:
+        from sms_ir import SmsIr
+
+        sms_ir = SmsIr(
+            settings.SMS_IR_API_KEY,
+            settings.SMS_IR_LINE_NUMBER,
+        )
+        sms_ir.send_verify_code(
+            phone,
+            settings.SMS_IR_TEMPLATE_ID,
+            [{'name': 'CODE', 'value': otp_code}]
+        )
+        return True, 'کد تایید ارسال شد.'
+    except Exception as e:
+        import traceback
+        print(f"SMS Error: {e}")
+        print(traceback.format_exc())
+        return False, f'خطا در ارسال پیامک: {e}'
+
+
+@login_required
+def password_change(request):
+    """تغییر رمز عبور توسط کاربر لاگین‌شده (با رمز فعلی)"""
+    from .forms import PasswordChangeForm
+    from django.contrib.auth import update_session_auth_hash
+
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = request.user
+            user.set_password(form.cleaned_data['new_password1'])
+            user.save()
+
+            # به‌روزرسانی session تا کاربر لاگین بماند
+            update_session_auth_hash(request, user)
+
+            messages.success(request, 'رمز عبور شما با موفقیت تغییر کرد. سایر دستگاه‌ها از حساب خارج شدند.')
+            return redirect('accounts:password_change')
+    else:
+        form = PasswordChangeForm(request.user)
+
+    return render(request, 'accounts/password_change.html', {'form': form})
+
+
+def password_reset_request(request):
+    """مرحله ۱: دریافت کد ملی و ارسال OTP"""
+    from .forms import PasswordResetRequestForm
+
+    if request.user.is_authenticated:
+        return redirect('properties:home')
+
+    if request.method == 'POST':
+        form = PasswordResetRequestForm(request.POST)
+        if form.is_valid():
+            national_code = form.cleaned_data['national_code']
+
+            user = User.objects.filter(username=national_code, is_active=True).first()
+
+            if not user:
+                messages.error(request, 'کاربری با این کد ملی یافت نشد.')
+                return render(request, 'accounts/password_reset_request.html', {'form': form})
+
+            phone = user.phone_number or user.agency_phone
+            if not phone:
+                messages.error(request, 'شماره موبایلی برای این حساب ثبت نشده است. با مدیریت تماس بگیرید.')
+                return render(request, 'accounts/password_reset_request.html', {'form': form})
+
+            # بررسی محدودیت
+            last_24h = timezone.now() - timedelta(hours=24)
+            request_count = user.password_reset_otps.filter(
+                created_at__gte=last_24h
+            ).count()
+
+            if request_count >= settings.OTP_MAX_REQUESTS_PER_DAY:
+                messages.error(
+                    request,
+                    f'شما در ۲۴ ساعت گذشته {settings.OTP_MAX_REQUESTS_PER_DAY} بار درخواست داده‌اید. '
+                    f'لطفاً بعداً تلاش کنید یا با مدیریت تماس بگیرید.'
+                )
+                return render(request, 'accounts/password_reset_request.html', {'form': form})
+
+            # تولید و ذخیره OTP
+            otp_code = str(random.randint(100000, 999999))
+            PasswordResetOTP.objects.create(
+                user=user,
+                otp_code=otp_code,
+                phone=phone,
+                expires_at=timezone.now() + timedelta(seconds=settings.OTP_EXPIRY_SECONDS),
+                ip_address=_get_client_ip(request),
+            )
+
+            # ارسال پیامک
+            success, msg = _send_otp_sms(phone, otp_code)
+
+            if success:
+                request.session['reset_user_id'] = user.id
+                request.session['reset_phone'] = phone
+                messages.success(request, f'کد تایید به شماره {phone} ارسال شد.')
+                return redirect('accounts:password_reset_verify')
+            else:
+                messages.error(request, msg)
+                return render(request, 'accounts/password_reset_request.html', {'form': form})
+    else:
+        form = PasswordResetRequestForm()
+
+    return render(request, 'accounts/password_reset_request.html', {'form': form})
+
+
+def password_reset_verify(request):
+    """مرحله ۲: تایید OTP و تغییر رمز"""
+    from .forms import PasswordResetVerifyForm
+
+    user_id = request.session.get('reset_user_id')
+    phone = request.session.get('reset_phone')
+
+    if not user_id:
+        messages.error(request, 'لطفاً ابتدا کد ملی خود را وارد کنید.')
+        return redirect('accounts:password_reset')
+
+    otp_obj = PasswordResetOTP.objects.filter(
+        user_id=user_id,
+        is_used=False,
+        expires_at__gt=timezone.now(),
+    ).order_by('-created_at').first()
+
+    if not otp_obj:
+        messages.error(request, 'کد تایید منقضی شده است. لطفاً دوباره درخواست دهید.')
+        return redirect('accounts:password_reset')
+
+    if request.method == 'POST':
+        form = PasswordResetVerifyForm(request.POST)
+        if form.is_valid():
+            entered_code = form.cleaned_data['otp_code']
+            new_password = form.cleaned_data['new_password1']
+
+            if entered_code != otp_obj.otp_code:
+                form.add_error('otp_code', 'کد تایید اشتباه است.')
+            else:
+                user = otp_obj.user
+                user.set_password(new_password)
+                user.save()
+
+                otp_obj.is_used = True
+                otp_obj.save()
+
+                request.session.pop('reset_user_id', None)
+                request.session.pop('reset_phone', None)
+
+                messages.success(request, 'رمز عبور با موفقیت تغییر کرد. اکنون می‌توانید وارد شوید.')
+                return redirect('accounts:login')
+    else:
+        form = PasswordResetVerifyForm()
+
+    return render(request, 'accounts/password_reset_verify.html', {
+        'form': form,
+        'phone': phone,
+    })

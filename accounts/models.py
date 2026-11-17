@@ -72,3 +72,32 @@ class License(models.Model):
 
     def is_valid(self):
         return self.is_active and self.status == 'active' and self.expires_at > timezone.now()
+
+class PasswordResetOTP(models.Model):
+    """کد یکبارمصرف بازنشانی رمز عبور"""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='password_reset_otps'
+    )
+    otp_code = models.CharField(max_length=6, verbose_name='کد تایید')
+    phone = models.CharField(max_length=15, verbose_name='شماره موبایل')
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(verbose_name='زمان انقضا')
+    is_used = models.BooleanField(default=False, verbose_name='استفاده شده')
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'کد بازنشانی رمز'
+        verbose_name_plural = 'کدهای بازنشانی رمز'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.otp_code}"
+
+    def is_valid(self):
+        from django.utils import timezone
+        return (
+            not self.is_used
+            and self.expires_at > timezone.now()
+        )
