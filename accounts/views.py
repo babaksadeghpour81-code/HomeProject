@@ -448,7 +448,6 @@ def admin_loans(request):
 
 @login_required
 def admin_loan_detail(request, loan_id):
-    """جزئیات درخواست وام"""
     if request.user.role not in ('admin', 'superadmin'):
         return HttpResponseForbidden('دسترسی غیرمجاز')
 
@@ -458,8 +457,11 @@ def admin_loan_detail(request, loan_id):
 
     if request.method == 'POST':
         new_status = request.POST.get('status')
+        admin_note = request.POST.get('admin_note', '').strip()
+
         if new_status in dict(LoanRequest.STATUS_CHOICES):
             loan.status = new_status
+            loan.admin_note = admin_note
             loan.save()
             messages.success(request, 'وضعیت درخواست وام به‌روزرسانی شد.')
             return redirect('accounts:admin_loans')

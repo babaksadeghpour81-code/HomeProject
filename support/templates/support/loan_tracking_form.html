@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}پیگیری درخواست وام{% endblock %}
+
+{% block content %}
+<h1>پیگیری درخواست وام</h1>
+
+<div class="license-card" style="max-width: 500px; margin: 40px auto;">
+    <h2>🔍 کد پیگیری خود را وارد کنید</h2>
+    <p>کد پیگیری هنگام ثبت درخواست به شما داده شده است.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-row">
+            <label>کد پیگیری:</label>
+            <input type="text" name="tracking_code" class="form-control" placeholder="مثلاً A1B2C3D4" required style="text-transform: uppercase;">
+        </div>
+        <button type="submit" class="btn btn-primary">پیگیری</button>
+    </form>
+</div>
+{% endblock %}

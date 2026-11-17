@@ -3,15 +3,42 @@
 
 {% block content %}
 <h1>درخواست وام بانکی</h1>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="alert alert-info">
+    ℹ️ پس از ثبت درخواست، یک <strong>کد پیگیری</strong> به شما داده می‌شود.
+    این کد را نزد خود نگه دارید تا بتوانید وضعیت درخواست را پیگیری کنید.
+</div>
+
+{% if my_requests_count > 0 %}
+    <div class="alert alert-warning">
+        شما تاکنون <strong>{{ my_requests_count }}</strong> درخواست ثبت کرده‌اید.
+        <a href="{% url 'support:my_loan_requests' %}">مشاهده درخواست‌ها</a>
+    </div>
+{% endif %}
+
 <form method="post" class="property-form">
     {% csrf_token %}
+
     {% for field in form %}
         <div class="form-row">
-            <label>{{ field.label }}:</label>
+            <label for="{{ field.id_for_label }}">
+                {{ field.label }}
+                {% if field.field.required %}<span class="required">*</span>{% endif %}
+            </label>
             {{ field }}
-            {% if field.errors %}<div class="alert alert-error">{{ field.errors }}</div>{% endif %}
+            {% if field.errors %}
+                <div class="field-error">{{ field.errors|join:", " }}</div>
+            {% endif %}
         </div>
     {% endfor %}
-    <button type="submit" class="btn btn-primary">ارسال درخواست</button>
+
+    <button type="submit" class="btn btn-primary">📤 ارسال درخواست</button>
+    <a href="{% url 'support:loan_tracking' %}" class="btn btn-outline" style="color:#1e3a8a; border-color:#1e3a8a;">🔍 پیگیری درخواست موجود</a>
 </form>
 {% endblock %}

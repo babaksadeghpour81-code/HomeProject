@@ -50,6 +50,10 @@
                 {% endfor %}
             </select>
         </div>
+        <div class="form-row">
+            <label>یادداشت برای متقاضی (اختیاری):</label>
+            <textarea name="admin_note" class="form-control" rows="3" placeholder="مثلاً: مدارک ناقص است، لطفاً تماس بگیرید.">{{ loan.admin_note|default:'' }}</textarea>
+        </div>
         <button type="submit" class="btn btn-primary">💾 ذخیره</button>
         <a href="{% url 'accounts:admin_loans' %}" class="btn btn-outline" style="color:#1e3a8a; border-color:#1e3a8a;">بازگشت</a>
     </form>

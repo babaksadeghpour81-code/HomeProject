@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}پیگیری درخواست وام{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{% url 'properties:home' %}">خانه</a>
+    <span>›</span>
+    <a href="{% url 'support:loan_tracking' %}">پیگیری وام</a>
+    <span>›</span>
+    <span>{{ loan.tracking_code }}</span>
+</div>
+
+<h1>پیگیری درخواست وام</h1>
+
+<div class="license-card">
+    <h2>📋 اطلاعات درخواست</h2>
+    <p><strong>کد پیگیری:</strong> <code style="background:#e0e7ff; padding:3px 8px; border-radius:4px; font-size:1.1rem;">{{ loan.tracking_code }}</code></p>
+    <p><strong>نام متقاضی:</strong> {{ loan.full_name }}</p>
+    <p><strong>نوع وام:</strong> {{ loan.get_loan_type_display }}</p>
+    <p><strong>مبلغ درخواستی:</strong> {{ loan.amount|floatformat:"0" }} تومان</p>
+    <p><strong>تاریخ ثبت:</strong> {{ loan.created_at|date:"Y/m/d H:i" }}</p>
+    <p><strong>آخرین به‌روزرسانی:</strong> {{ loan.updated_at|date:"Y/m/d H:i" }}</p>
+</div>
+
+<div class="license-card">
+    <h2>📊 وضعیت درخواست</h2>
+    <div class="status-tracker">
+        <div class="status-step {% if loan.status in 'pending,reviewing,approved' %}active{% endif %}">
+            <span class="step-icon">📝</span>
+            <span class="step-label">ثبت شد</span>
+        </div>
+        <div class="status-step {% if loan.status in 'reviewing,approved' %}active{% endif %}">
+            <span class="step-icon">🔍</span>
+            <span class="step-label">در حال بررسی</span>
+        </div>
+        <div class="status-step {% if loan.status == 'approved' %}active approved{% elif loan.status == 'rejected' %}active rejected{% endif %}">
+            <span class="step-icon">
+                {% if loan.status == 'approved' %}✅{% elif loan.status == 'rejected' %}❌{% else %}⏳{% endif %}
+            </span>
+            <span class="step-label">
+                {% if loan.status == 'approved' %}تایید شد{% elif loan.status == 'rejected' %}رد شد{% else %}نتیجه{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <p style="margin-top: 20px;">
+        <strong>وضعیت فعلی:</strong>
+        {% if loan.status == 'pending' %}<span class="badge badge-warning">در انتظار بررسی</span>
+        {% elif loan.status == 'reviewing' %}<span class="badge badge-info">در حال بررسی</span>
+        {% elif loan.status == 'approved' %}<span class="badge badge-success">تایید شده</span>
+        {% else %}<span class="badge badge-danger">رد شده</span>{% endif %}
+    </p>
+
+    {% if loan.admin_note %}
+        <div class="alert alert-info">
+            <strong>یادداشت کارشناس:</strong> {{ loan.admin_note }}
+        </div>
+    {% endif %}
+</div>
+
+<a href="{% url 'support:loan_tracking' %}" class="btn btn-outline" style="color:#1e3a8a; border-color:#1e3a8a;">🔍 پیگیری کد دیگر</a>
+{% endblock %}
