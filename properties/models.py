@@ -94,10 +94,15 @@ class ResidentialProperty(BaseProperty):
 
     def clean(self):
         from django.core.exceptions import ValidationError
-        if self.status == 'sale' and not self.price:
-            raise ValidationError('برای فروش، قیمت الزامی است.')
-        if self.status == 'rent' and not (self.deposit or self.rent):
-            raise ValidationError('برای رهن/اجاره، ودیعه یا اجاره ماهیانه الزامی است.')
+        # if self.status == 'sale' and not self.price:
+            # raise ValidationError('برای فروش، قیمت الزامی است.')
+        # if self.status == 'rent' and not (self.deposit or self.rent):
+            # raise ValidationError('برای رهن/اجاره، ودیعه یا اجاره ماهیانه الزامی است.')
+        if self.status == 'rent':
+            if not self.deposit:
+                raise ValidationError('برای رهن/اجاره، وارد کردن «ودیعه» الزامی است.')
+            if not self.rent:
+                raise ValidationError('برای رهن/اجاره، وارد کردن «اجاره ماهیانه» الزامی است.')
 
     @property
     def images(self):
@@ -163,7 +168,7 @@ class PropertyImage(models.Model):
     image = models.ImageField(upload_to='properties/images/', verbose_name='عکس')
     caption = models.CharField(max_length=200, blank=True, null=True, verbose_name='توضیح عکس')
     order = models.PositiveIntegerField(default=0, verbose_name='ترتیب نمایش')
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = jmodels.jDateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = 'عکس آگهی'

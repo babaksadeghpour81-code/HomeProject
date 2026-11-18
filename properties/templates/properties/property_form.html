@@ -225,6 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ===== راهنمای وضعیت =====
+    /*
     function updateStatusHint() {
         if (!statusSelect || !statusHint) return;
         const status = statusSelect.value;
@@ -236,6 +237,21 @@ document.addEventListener('DOMContentLoaded', function() {
             statusHint.textContent = '';
         }
     }
+
+     */
+
+    function updateStatusHint() {
+        if (!statusSelect || !statusHint) return;
+        const status = statusSelect.value;
+        if (status === 'sale') {
+            statusHint.textContent = 'قیمت فروش اختیاری است.';
+        } else if (status === 'rent') {
+            statusHint.textContent = 'برای رهن/اجاره، هر دو «ودیعه» و «اجاره ماهیانه» الزامی است.';
+        } else {
+            statusHint.textContent = '';
+        }
+    }
+
     if (statusSelect) {
         statusSelect.addEventListener('change', updateStatusHint);
         updateStatusHint();
@@ -248,6 +264,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const deposit = depositInput ? depositInput.value.trim() : '';
         const rent = rentInput ? rentInput.value.trim() : '';
 
+        /*
+
         if (status === 'sale' && !price) {
             e.preventDefault();
             alert('برای آگهی فروش، وارد کردن «قیمت» الزامی است.');
@@ -259,6 +277,23 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             alert('برای آگهی رهن/اجاره، حداقل یکی از «ودیعه» یا «اجاره ماهیانه» را وارد کنید.');
             return;
+        }
+
+         */
+
+        if (status === 'rent') {
+            if (!deposit) {
+                e.preventDefault();
+                alert('برای آگهی رهن/اجاره، وارد کردن «ودیعه» الزامی است.');
+                depositInput.focus();
+                return;
+            }
+            if (!rent) {
+                e.preventDefault();
+                alert('برای آگهی رهن/اجاره، وارد کردن «اجاره ماهیانه» الزامی است.');
+                rentInput.focus();
+                return;
+            }
         }
 
         // حجم فایل‌ها

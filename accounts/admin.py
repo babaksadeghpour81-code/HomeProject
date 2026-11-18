@@ -13,9 +13,10 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ('username', 'email', 'phone_number', 'agency_name')
     fieldsets = UserAdmin.fieldsets + (
         ('اطلاعات آژانس', {
-            'fields': ('role', 'phone_number', 'agency_name', 'agency_address', 'agency_phone', 'agency_logo')
+            'fields': ('role', 'phone_number', 'agency_name', 'agency_address', 'agency_phone', 'agency_logo', 'national_card_image', 'business_license_image',)
         }),
     )
+    readonly_fields = ('national_card_image', 'business_license_image')  # ✅ فقط خواندنی
 
     @admin.display(description='لایسنس فعال؟', boolean=True)
     def has_active_license_display(self, obj):

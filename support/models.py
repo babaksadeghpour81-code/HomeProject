@@ -6,9 +6,12 @@ from django_jalali.db import models as jmodels
 
 class LoanRequest(models.Model):
     LOAN_TYPE_CHOICES = (
-        ('purchase', 'خرید ملک'),
-        ('construction', 'ساخت'),
-        ('renovation', 'بازسازی'),
+        ('youth_housing', 'مسکن جوانان'),
+        ('housing_bonds', 'اوراق مسکن'),
+        ('jaaleh', 'جعاله'),
+        ('housing_deposit', 'ودیعه مسکن'),
+        ('worn_texture', 'بافت فرسوده'),
+        ('other', 'سایر'),
     )
     STATUS_CHOICES = (
         ('pending', 'در انتظار بررسی'),

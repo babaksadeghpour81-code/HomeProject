@@ -25,30 +25,32 @@ class RegisterForm(forms.ModelForm):
         required=True,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'نام خانوادگی'})
     )
+    national_card_image = forms.ImageField(
+        label='عکس کارت ملی',
+        required=True,
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+    )
+    business_license_image = forms.ImageField(
+        label='عکس جواز کسب (اختیاری)',
+        required=False,
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+    )
 
     class Meta:
         model = User
         fields = [
-            'username',
-            'first_name',
-            'last_name',
-            'email',
-            'phone_number',
-            'agency_name',
-            'agency_address',
-            'agency_phone',
+            'username', 'first_name', 'last_name', 'email', 'phone_number',
+            'agency_name', 'agency_address', 'agency_phone',
+            'national_card_image', 'business_license_image',
         ]
         widgets = {
             'username': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'کد ملی ۱۰ رقمی',
-                'maxlength': '10',
-                'inputmode': 'numeric',
+                'class': 'form-control', 'placeholder': 'کد ملی ۱۰ رقمی',
+                'maxlength': '10', 'inputmode': 'numeric',
             }),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'phone_number': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': '09123456789',
+                'class': 'form-control', 'placeholder': '09123456789',
                 'inputmode': 'numeric',
             }),
             'agency_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -58,7 +60,6 @@ class RegisterForm(forms.ModelForm):
 
     def clean_username(self):
         username = self.cleaned_data.get('username', '').strip()
-        # تبدیل اعداد فارسی به انگلیسی
         username = username.translate(str.maketrans('۰۱۲۳۴۵۶۷۸۹', '0123456789'))
         if not username.isdigit() or len(username) != 10:
             raise forms.ValidationError('کد ملی باید ۱۰ رقم عددی باشد.')
@@ -82,12 +83,31 @@ class RegisterForm(forms.ModelForm):
             raise forms.ValidationError('رمز عبور باید حداقل ۸ کاراکتر باشد.')
         return p2
 
+    # ✅ اعتبارسنجی عکس‌ها در clean_* (نه در save)
+    def clean_national_card_image(self):
+        img = self.cleaned_data.get('national_card_image')
+        if img and img.size > 5 * 1024 * 1024:
+            raise forms.ValidationError('حجم عکس کارت ملی نباید بیشتر از ۵ مگابایت باشد.')
+        return img
+
+    def clean_business_license_image(self):
+        img = self.cleaned_data.get('business_license_image')
+        if img and img.size > 5 * 1024 * 1024:
+            raise forms.ValidationError('حجم عکس جواز کسب نباید بیشتر از ۵ مگابایت باشد.')
+        return img
+
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data['password1'])
         user.role = 'agency'
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
+
+        if self.cleaned_data.get('national_card_image'):
+            user.national_card_image = self.cleaned_data['national_card_image']
+        if self.cleaned_data.get('business_license_image'):
+            user.business_license_image = self.cleaned_data['business_license_image']
+
         if commit:
             user.save()
         return user

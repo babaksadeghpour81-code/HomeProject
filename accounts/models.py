@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django_jalali.db import models as jmodels
 
 
 class User(AbstractUser):
@@ -19,6 +20,16 @@ class User(AbstractUser):
     agency_address = models.CharField(max_length=255, blank=True, null=True)
     agency_phone = models.CharField(max_length=15, blank=True, null=True)
     agency_logo = models.ImageField(upload_to='agencies/logos/', blank=True, null=True)
+    national_card_image = models.ImageField(
+        upload_to='agencies/national_cards/',
+        blank=True, null=True,
+        verbose_name='عکس کارت ملی'
+    )
+    business_license_image = models.ImageField(
+        upload_to='agencies/business_licenses/',
+        blank=True, null=True,
+        verbose_name='عکس جواز کسب'
+    )
 
     def __str__(self):
         return f"{self.username} - {self.get_role_display()}"
@@ -56,8 +67,8 @@ class License(models.Model):
         related_name='license_info'
     )
     license_key = models.CharField(max_length=100, unique=True)
-    issued_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField()
+    issued_at = jmodels.jDateTimeField(auto_now_add=True)
+    expires_at = jmodels.jDateTimeField()
     is_active = models.BooleanField(default=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     amount_paid = models.DecimalField(max_digits=10, decimal_places=0, default=0)
@@ -82,8 +93,8 @@ class PasswordResetOTP(models.Model):
     )
     otp_code = models.CharField(max_length=6, verbose_name='کد تایید')
     phone = models.CharField(max_length=15, verbose_name='شماره موبایل')
-    created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField(verbose_name='زمان انقضا')
+    created_at = jmodels.jDateTimeField(auto_now_add=True)
+    expires_at = jmodels.jDateTimeField(verbose_name='زمان انقضا')
     is_used = models.BooleanField(default=False, verbose_name='استفاده شده')
     ip_address = models.GenericIPAddressField(blank=True, null=True)
 

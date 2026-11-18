@@ -3,7 +3,7 @@
 
 {% block content %}
 <h1>ثبت‌نام آژانس املاک</h1>
-<form method="post" class="property-form">
+<form method="post" enctype="multipart/form-data" class="property-form">
     {% csrf_token %}
 
     {% if form.errors %}
@@ -70,6 +70,25 @@
     <div class="form-row">
         <label>تکرار رمز عبور:</label>
         {{ form.password2 }}
+    </div>
+    <!-- ✅ عکس کارت ملی (اجباری) -->
+    <div class="form-row">
+        <label>عکس کارت ملی: <span class="required">*</span></label>
+        {{ form.national_card_image }}
+        {% if form.national_card_image.errors %}
+            <div class="field-error">{{ form.national_card_image.errors|join:", " }}</div>
+        {% endif %}
+        <small class="form-hint">حداکثر ۵ مگابایت، فرمت JPG یا PNG</small>
+    </div>
+
+    <!-- ✅ عکس جواز کسب (اختیاری) -->
+    <div class="form-row">
+        <label>عکس جواز کسب (اختیاری):</label>
+        {{ form.business_license_image }}
+        {% if form.business_license_image.errors %}
+            <div class="field-error">{{ form.business_license_image.errors|join:", " }}</div>
+        {% endif %}
+        <small class="form-hint">در صورت وجود جواز کسب، آپلود کنید</small>
     </div>
 
     <button type="submit" class="btn btn-primary">ثبت‌نام</button>
